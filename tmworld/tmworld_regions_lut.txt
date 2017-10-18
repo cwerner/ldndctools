@@ -1,0 +1,6 @@
+R_Code	R_Name
+002	"Africa"
+019	"Americas"
+142	"Asia"
+150	"Europe"
+009	"Oceania"
