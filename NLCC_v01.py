@@ -41,7 +41,7 @@ def main(years=range(1901,2013), coords=None, names=None, INPATH='.', outName='c
     nce = xr.open_dataset( 'misc/elevation_05deg.nc' ).squeeze()
     nce = nce.drop(['time','z'])
 
-    ele = nce.sel(lat=list(lats), lon=list(lons), method='nearest')
+    ele = nce.sel_points(lat=list(lats), lon=list(lons), method='nearest')
 
     
     for year in years:
@@ -51,7 +51,7 @@ def main(years=range(1901,2013), coords=None, names=None, INPATH='.', outName='c
         #nc.variables['prcp']
 
         #print lats, lons
-        x = nc.sel(lat=list(lats), lon=list(lons), method='nearest')
+        x = nc.sel_points(lat=list(lats), lon=list(lons), method='nearest')
         xL.append( x ) #x.copy(deep=True) )
 
         # do extrac calculations for header info
