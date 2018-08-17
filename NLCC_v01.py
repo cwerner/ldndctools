@@ -43,13 +43,17 @@ def main(years=range(1901,2013), coords=None, names=None, INPATH='.', outName='c
 
     ele = nce.sel_points(lat=list(lats), lon=list(lons), method='nearest')
 
-    
+    print("Starting year loop")
+
+ 
     for year in years:
         #if year % years[0] == 0:
         print('year', year, '...')
         nc = xr.open_dataset( os.path.join(INPATH, 'pgf2_05deg_v2_%s.nc' % year) )
         #nc.variables['prcp']
 
+        # limit big file
+        nc = nc.sel(lat=slice(min(lats)-1, max(lats)+1), lon=slice(min(lons)-1, max(lons)+1))
         #print lats, lons
         x = nc.sel_points(lat=list(lats), lon=list(lons), method='nearest')
         xL.append( x ) #x.copy(deep=True) )
@@ -144,7 +148,7 @@ def main(years=range(1901,2013), coords=None, names=None, INPATH='.', outName='c
 
 
         if np.isfinite( ele['data'][i].values ):
-            elevation = int(round(ele['data'][i].values,0))
+            elevation = int(ele['data'][i].values.round(0))
         else:
             # default elevation
             elevation = 10
