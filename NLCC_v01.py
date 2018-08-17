@@ -2,7 +2,7 @@ import xarray as xr
 import numpy as np
 import pandas as pd
 import os, datetime, shutil, string
-import cStringIO
+import io
 from optparse import OptionParser
 
 # chunked netcdf input speedup 15x comapred to regular netcdf !!!
@@ -20,14 +20,14 @@ dataInfo = {'title':  'PGF v2 Climate Data',
 def main(years=range(1901,2013), coords=None, names=None, INPATH='.', outName='climate.txt', fcnt = None, fcnttot=None):
 
     if coords == None:
-        print 'need to specify coords'
+        print('need to specify coords')
         exit(1)
 
 
 
     if fcnt != None:
-        outName += '.' + string.zfill(fcnt, 3)
-        print 'processing subset %s (%d/%d)' % (outName, fcnt+1, fcnttot)
+        outName += '.' + str(fcnt).zfill(3)
+        print('processing subset %s (%d/%d)' % (outName, fcnt+1, fcnttot))
 
     xL = []
 
@@ -41,17 +41,17 @@ def main(years=range(1901,2013), coords=None, names=None, INPATH='.', outName='c
     nce = xr.open_dataset( 'misc/elevation_05deg.nc' ).squeeze()
     nce = nce.drop(['time','z'])
 
-    ele = nce.sel_points(lat=list(lats), lon=list(lons), method='nearest')
+    ele = nce.sel(lat=list(lats), lon=list(lons), method='nearest')
 
     
     for year in years:
         #if year % years[0] == 0:
-        print 'year', year, '...'
+        print('year', year, '...')
         nc = xr.open_dataset( os.path.join(INPATH, 'pgf2_05deg_v2_%s.nc' % year) )
         #nc.variables['prcp']
 
         #print lats, lons
-        x = nc.sel_points(lat=list(lats), lon=list(lons), method='nearest')
+        x = nc.sel(lat=list(lats), lon=list(lons), method='nearest')
         xL.append( x ) #x.copy(deep=True) )
 
         # do extrac calculations for header info
@@ -113,7 +113,7 @@ def main(years=range(1901,2013), coords=None, names=None, INPATH='.', outName='c
         if i == 0:
 
             # create buffer
-            sbuffer = cStringIO.StringIO()
+            sbuffer = io.StringIO()
 
             # write file info
             dataInfo['file'] = outName
@@ -195,7 +195,7 @@ def main(years=range(1901,2013), coords=None, names=None, INPATH='.', outName='c
 
     # write buffer to file
 
-    print 'writing file to drive'
+    print('writing file to drive')
     with open(outName, 'w') as fd:
         sbuffer.seek(0)
         shutil.copyfileobj(sbuffer, fd)
@@ -253,14 +253,14 @@ ___________________________________________
 
     (options, args) = parser.parse_args()
 
-    print "____________________________________________________________________________"
-    print
-    print "        [N]etCDF [L]DNDC [C]limate [C]onverter (v0.1) (NLCC v0.1)"
-    print 
-    print "            ... use this tool to build TXT LDNDC climate files"
-    print "____________________________________________________________________________"
-    print "2016/05/15, christian.werner@senckenberg.de"
-    print 
+    print("____________________________________________________________________________")
+    print()
+    print("        [N]etCDF [L]DNDC [C]limate [C]onverter (v0.1) (NLCC v0.1)")
+    print()
+    print("            ... use this tool to build TXT LDNDC climate files")
+    print("____________________________________________________________________________")
+    print("2016/05/15, christian.werner@senckenberg.de")
+    print()
 
     # defaults
     coords   = []
@@ -275,12 +275,12 @@ ___________________________________________
         COORDTHRESHOLD = int(options.chunks)
 
     # year range
-    a = [int(x) for x in string.split(options.years, '-')]
+    a = [int(x) for x in options.years.split('-')]
     YEARS = range(a[0], a[1]+1)
 
     # too few arguments
     if len(args) == 0:
-        print args
+        print(args)
         parser.print_help()
         exit(1)
     elif len(args) == 1:
@@ -301,7 +301,7 @@ ___________________________________________
         x = options.bbox.split(sep)
         x = [float(a) for a in x]
         if len(x) != 4:
-            print 'Please specify 4 coordinates as bounding box.'
+            print('Please specify 4 coordinates as bounding box.')
             exit(1)
 
         # do we have corner edges or cell centers?
@@ -365,21 +365,21 @@ ___________________________________________
         pass
 
     else:
-        print 'No mode sected.'
+        print('No mode sected.')
         exit(1)
 
 
-    print '------------------------------------------'
-    print 'Dataset: PGF2 v2 0.5 deg'
-    print 'Climate data range : %d-%d' % (YEARS[0], YEARS[-1])
-    print 'Coords to process  :', len(coords)
+    print('------------------------------------------')
+    print('Dataset: PGF2 v2 0.5 deg')
+    print('Climate data range : %d-%d' % (YEARS[0], YEARS[-1]))
+    print('Coords to process  :', len(coords))
     if options.bbox != None:
-        print bboxStr
-    print '------------------------------------------'
+        print(bboxStr)
+    print('------------------------------------------')
 
     if len(coords) > COORDTHRESHOLD:
         # run in chunked mode
-        print '\nLarge number of coords selected. Splitting into files'
+        print('\nLarge number of coords selected. Splitting into files')
         coords2d = [coords[i:i+COORDTHRESHOLD] for i in range(0, len(coords), COORDTHRESHOLD)]
         names2d  = [names[i:i+COORDTHRESHOLD] for i in range(0, len(names), COORDTHRESHOLD)]
 
