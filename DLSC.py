@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # Dynamic LandscapeDNDC Sitefile Creator (DLSC v0.1)
 #
 # Use this tool to build XML LDNDC site files
