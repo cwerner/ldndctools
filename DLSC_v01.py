@@ -299,6 +299,12 @@ Help:
     parser.add_option("-r", "--res", dest="resolution", default="HR",
             help="select resolution: HR (0.083x0.083deg) or LR (0.5x0.5deg)")
 
+    parser.add_option("--region", dest="rcode", default=None,
+            help="for non-interactive execution provide region code(s) [chain with +]")
+
+    parser.add_option("--country", dest="ccode", default=None,
+            help="for non-interactive execution provide country code(s) [chain with +]")
+
     (options, args) = parser.parse_args()
 
     print("____________________________________________________________________________")
