@@ -319,6 +319,16 @@ Help:
     # delete later
     DEBUG = True
 
+    if (options.rcode is not None) or (options.ccode is not None):
+        print("Non-interactive mode...")
+
+    # query environment or command flags for selection (non-intractive mode)
+    options.rcode = os.environ.get('DLSC_REGION', options.rcode)
+    options.ccode = os.environ.get('DLSC_COUNTRY', options.ccode)
+
+    # single country selection
+    if (options.rcode is None) and (options.ccode is not None):
+        options.rcode="c"
     # high-res datasets
     HR_SOIL   = 'soil/GLOBAL_WISESOIL_D1_HR.nc'
     HR_ADMIN3 = 'tmworld/tmworld_un_HR.nc'
@@ -423,7 +433,11 @@ Help:
 
     # (sub-)region selection section
     while repeat:
-        x = input('Select (sub-)region (multiple: +; c: add countries): ')
+        # query if not set programatically
+        if options.rcode in [None]:
+            x = input('Select (sub-)region (multiple: +; c: add countries): ')
+        else:
+            x = options.rcode
 
         if x == '':
             showCountries = True
@@ -433,6 +447,8 @@ Help:
             items = x.split('+')
         else:
             items = [x]
+
+        print(items)
 
         # validate items
         for it in items:
@@ -499,7 +515,11 @@ Help:
         repeat = True
 
         while repeat:
-            x = input('Select country (multiple: +): ')
+            # query if not set programatically
+            if options.ccode is None:
+                x = input('Select country (multiple: +): ')
+            else:
+                x = options.ccode
 
             if '+' in x:
                 items = x.split('+')
