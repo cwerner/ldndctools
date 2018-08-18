@@ -181,7 +181,7 @@ def calcHydaulicProperties(D):
     try:
         ALPHA = math.e**logAlpha
     except:
-        print D
+        print(D)
     vGn = math.e**logN
     vGm = 1.0 # (1.0 - (1.0/ vGn)) disabled as we do not use texture classes but real fractions
 
@@ -250,7 +250,7 @@ def print_table(seq, columns=2, base=0):
 
     # expand to muliple 
     fullSize = int(math.ceil(len(seq) / float( columns ))) * columns
-    labels = np.array(seq + [''] * (fullSize-len(seq)), dtype=object ).reshape(-1,fullSize/columns)
+    labels = np.array(seq + [''] * (fullSize-len(seq)), dtype=object ).reshape(-1,int(fullSize/columns))
     labels = labels.T
 
     vals = []
@@ -270,8 +270,7 @@ def print_table(seq, columns=2, base=0):
     for row in labels:
         t.append( ''.join( [x.ljust(35) for x in row] ) )
     
-    print '\n'.join( t ) + '\n'
-
+    print('\n'.join( t ) + '\n')
 
 
 
@@ -302,14 +301,14 @@ Help:
 
     (options, args) = parser.parse_args()
 
-    print "____________________________________________________________________________"
-    print
-    print "        [D]ynamic [L]andscapeDNDC [S]itefile [C]reator (DLSC v0.1)"
-    print 
-    print "              ... use this tool to build XML LDNDC site files"
-    print "____________________________________________________________________________"
-    print "2016/05/15, christian.werner@senckenberg.de"
-    print 
+    print("____________________________________________________________________________")
+    print()
+    print("        [D]ynamic [L]andscapeDNDC [S]itefile [C]reator (DLSC v0.1)")
+    print()
+    print("              ... use this tool to build XML LDNDC site files")
+    print("____________________________________________________________________________")
+    print("2016/05/15, christian.werner@senckenberg.de")
+    print ()
 
     # delete later
     DEBUG = True
@@ -353,8 +352,8 @@ Help:
     else:
         resStr = '0.0833x0.0833 deg'
 
-    print 'Soil resolution: %s [%s]' % (options.resolution, resStr )
-    print 'Outfile name:   ', outname
+    print('Soil resolution: %s [%s]' % (options.resolution, resStr ))
+    print('Outfile name:   ', outname)
 
 
     # get cell mask from soil/ admin intersect
@@ -384,15 +383,15 @@ Help:
     dfsr = pd.read_csv('tmworld/tmworld_subregions_lut.txt', sep='\t')
     Dsubregions = dict(zip(dfsr.SR_Name, dfsr.SR_Code))
 
-    print '\nPlease make your region/ country selection [use codes]'
-    print 'Multiple selections are allowed [i.e. "12+13+17"]\n'
-    print 'If you want to include a specific country type "c" in selection.'
-    print 'You can also add a country to a region [i.e. "27+c"]'
-    print '\nRegions:'
+    print('\nPlease make your region/ country selection [use codes]')
+    print('Multiple selections are allowed [i.e. "12+13+17"]\n')
+    print('If you want to include a specific country type "c" in selection.')
+    print('You can also add a country to a region [i.e. "27+c"]')
+    print('\nRegions:')
     seq1 = sorted(Dregions.keys())
     print_table( seq1, 1 )
 
-    print 'Sub-Regions:'
+    print('Sub-Regions:')
     seq2 = sorted(Dsubregions.keys())
 
 
@@ -400,7 +399,7 @@ Help:
 
     # manually add some regions:
 
-    print 'Special:'
+    print('Special:')
     seq_extra = ['EU28', 'WORLD']
     print_table( seq_extra, 1, base=len(seq1)+len(seq2))
     seq2.append( 'EU28'  )  # 2nd last
@@ -418,7 +417,7 @@ Help:
 
     # (sub-)region selection section
     while repeat:
-        x = raw_input('Select (sub-)region (multiple: +; c: add countries): ')
+        x = input('Select (sub-)region (multiple: +; c: add countries): ')
 
         if x == '':
             showCountries = True
@@ -431,7 +430,7 @@ Help:
 
         # validate items
         for it in items:
-            if string.lower(it) == 'c':
+            if it.lower() == 'c':
                 showCountries = True
                 repeat        = False
             else:
@@ -448,10 +447,10 @@ Help:
                         else:
                             valItems.append(I)
                     else:
-                        print 'Invalid Entry (0...%d) %d' % (len(seq1)+len(seq2)-1, I)
+                        print('Invalid Entry (0...%d) %d' % (len(seq1)+len(seq2)-1, I))
 
                 except ValueError:
-                    print 'Invalid Entry'
+                    print('Invalid Entry')
 
     # lists with selection ids for tmworld netcdfs
     UNR  = []; UNSR = []; UNC  = []
@@ -477,7 +476,7 @@ Help:
 
     # country selection section
     if showCountries == True:
-        print '\nCountries:'
+        print('\nCountries:')
 
         seq3 = sorted(Dcountries.keys())
 
@@ -494,7 +493,7 @@ Help:
         repeat = True
 
         while repeat:
-            x = raw_input('Select country (multiple: +): ')
+            x = input('Select country (multiple: +): ')
 
             if '+' in x:
                 items = x.split('+')
@@ -514,21 +513,21 @@ Help:
                         selPrint2.append( reg )
 
                     else:
-                        print 'Invalid Entry (0...%d) %d' % (len(seq3)-1, I)
+                        print('Invalid Entry (0...%d) %d' % (len(seq3)-1, I))
 
                 except ValueError:
-                    print 'Invalid Entry'
+                    print('Invalid Entry')
 
     # if eu28 was selected add those ids now
     if eu28 == True:
         UNC += Dextracountries.values()
 
-    print '\n----------------------------------'
-    print 'SELECTION'
+    print('\n----------------------------------')
+    print('SELECTION')
     if len(selPrint1) > 0:
-        print 'Region  : ', '; '.join( selPrint1 )
+        print('Region  : ', '; '.join( selPrint1 ))
     if len(selPrint2) > 0:
-        print 'Country : ', '; '.join( selPrint2 )
+        print('Country : ', '; '.join( selPrint2 ))
 
 
     def createMask(ncname, vals, mask=None):
@@ -558,16 +557,16 @@ Help:
     if world:
         mask = np.where( ds['Band1'].values > 0, 1, 0)
 
-    print '\nNumber of sites/ cells:'
-    print ' region mask:', int(np.sum(mask))
+    print('\nNumber of sites/ cells:')
+    print(' region mask:', int(np.sum(mask)))
     mask *= soilmask
-    print ' + soil mask:', int(np.sum(mask))
-    print '----------------------------------\n'
+    print(' + soil mask:', int(np.sum(mask)))
+    print('----------------------------------\n')
 
 
     if world and options.resolution == 'HR':
-        print '\nWARNING  You selected the entire world in high-res as a domain.'
-        print '         This will take a loooooooooong time.\n'
+        print('\nWARNING  You selected the entire world in high-res as a domain.')
+        print('         This will take a loooooooooong time.\n')
         x = raw_input('[p] to proceed, anything else to abort')
 
         if string.lower(x) == 'p':
@@ -662,7 +661,7 @@ Help:
 
     # write XML file
     # merge site chunks into common site file
-    print "\nWriting site XML file"
+    print("\nWriting site XML file")
     
     xml = ET.Element( "ldndcsite" )
     for scnt, site in enumerate(sites):
@@ -676,7 +675,7 @@ Help:
     open( outname, 'w' ).write( strOut )
 
     if DEBUG:
-        print "Writing netCDF file of selected regions:", outname[:-4] + '_mask.nc'
+        print("Writing netCDF file of selected regions:", outname[:-4] + '_mask.nc')
         dout = xr.Dataset()
 
         # mask A
