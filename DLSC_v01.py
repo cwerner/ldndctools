@@ -66,12 +66,12 @@ class SiteXML( BaseXML ):
         BaseXML.__init__(self)
         lat   = str(k['lat'])
         lon   = str(k['lon'])
-        if k.has_key('id'):
+        if 'id' in k:
             theId = "%d" % k['id']
         else:
             theId = "0"
 
-        if k.has_key('usehistory'):
+        if 'usehistory' in k:
             theUsehistory = str(k['usehistory'])
         else:
             theUsehistory = 'arable'
@@ -609,6 +609,8 @@ Help:
     Lix   = []
     Ljx   = []
 
+    Dcids = {}
+
     for j in range(len(mask)):
         for i in range(len(mask[0])):
             if mask[j,i] == 1:
@@ -617,7 +619,7 @@ Help:
                 Lcids.append( cid )
                 Lix.append(i)
                 Ljx.append(j)
-
+                Dcids[(ds.coords['lat'].values[j], ds.coords['lon'].values[i])] = cid
 
     # punch out soil id coordinate (by segment of 1000 cells max. each for speed reasons)
     COORDTHRESHOLD = 200
@@ -636,15 +638,30 @@ Help:
             progressbar.SimpleProgress(), ' ',
             progressbar.Percentage()]).start()
 
+    # regional subset first to savetime
+    print(ds)
+
+    min_lat = ds["lat"].isel(lat=min(Ljx))
+    max_lat = ds["lat"].isel(lat=max(Ljx))
+
+    min_dlat = min(Ljx)
+    min_dlon = min(Lix)
+
+    min_lon = ds["lon"].isel(lon=min(Lix))
+    max_lon = ds["lon"].isel(lon=max(Lix))
+
+    ds_ = ds.sel(lat=slice(min_lat, max_lat), lon=slice(min_lon, max_lon))
+         
+
     for Lix, Ljx, Lcids in zip(Lix2d, Ljx2d, Lcids2d):
         #print "processing site batch %d of %d" % (sbCnt, len(Lcids2d))
-        dx = ds.isel_points(lat=Ljx, lon=Lix)
+        print(Lcids)
+        dx = ds_.isel_points(lat=np.array(Ljx)-min_dlat, lon=np.array(Lix)-min_dlon)
         
         for dp in dx.points:
             d = dx.sel(points=dp)
 
-            # for each point
-            site = SiteXML(  lat=float(d.lat), lon=float(d.lon), id=Lcids[int(dp)] )
+            site = SiteXML(  lat=float(d.lat), lon=float(d.lon), id=Dcids[(float(d.lat), float(d.lon))]) #id=Lcids[int(dp)] )
 
             # take point selection and return dict with modified data naming and units
             data2 = translateDataFormat( d )
