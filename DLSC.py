@@ -296,6 +296,8 @@ Help:
 -h, --help
 """)
 
+    parser.add_option("-b", "--bbox", dest="bbox", default=None,
+            help="bbox for netCDF output [x1,y1,x2,y2]")
 
     parser.add_option("-r", "--res", dest="resolution", default="HR",
             help="select resolution: HR (0.083x0.083deg) or LR (0.5x0.5deg)")
@@ -640,8 +642,6 @@ Help:
             progressbar.Percentage()]).start()
 
     # regional subset first to savetime
-    print(ds)
-
     min_lat = ds["lat"].isel(lat=min(Ljx))
     max_lat = ds["lat"].isel(lat=max(Ljx))
 
@@ -656,7 +656,6 @@ Help:
 
     for Lix, Ljx, Lcids in zip(Lix2d, Ljx2d, Lcids2d):
         #print "processing site batch %d of %d" % (sbCnt, len(Lcids2d))
-        print(Lcids)
         dx = ds_.isel_points(lat=np.array(Ljx)-min_dlat, lon=np.array(Lix)-min_dlon)
         
         for dp in dx.points:
@@ -727,6 +726,13 @@ Help:
         da.name  = 'selected mask'
         dout['selmask'] = da
 
+        # clip to bbox
+        if options.bbox:
+            print(f"BBox: {options.bbox}")
+            lon1,lat1,lon2,lat2 = (float(x) for x in options.bbox.replace('[','').replace(']','').split(','))
+            lat1, lat2 = (lat1, lat2) if lat1 < lat2 else (lat2, lat1)
+            lon1, lon2 = (lon1, lon2) if lon1 < lon2 else (lon2, lon1)
+            dout = dout.sel(lat=slice(lat1, lat2), lon=slice(lon1, lon2))
         dout.to_netcdf(outname[:-4] + '_mask.nc', format='NETCDF4_CLASSIC')
 
 
