@@ -614,10 +614,19 @@ Help:
 
     Dcids = {}
 
+    # cid mode
+    # if LR: 1000
+    # if HR: 10000
+
+    if options.resolution == "HR":
+        M = 10000
+    else:
+        M = 1000
+
     for j in range(len(mask)):
         for i in range(len(mask[0])):
             if mask[j,i] == 1:
-                cid = j*1000+i
+                cid = j*M+i
 
                 Lcids.append( cid )
                 Lix.append(i)
