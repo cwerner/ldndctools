@@ -91,7 +91,7 @@ class SiteXML( BaseXML ):
                                        corg5     ='-99.99', corg30      ='-99.99')
         layers = ET.SubElement(soil, "layers")
 
-    def addSoilLayer(self, DATA, ID=None, litter=False, accuracy={}):
+    def addSoilLayer(self, DATA, ID=None, litter=False, accuracy={}, extra_split=False):
         ''' this adds a soil layer to the given site (to current if no ID given)'''
         # only calculate hydr. properties if we have a mineral soil layer added
         if litter == False:
@@ -112,6 +112,18 @@ class SiteXML( BaseXML ):
                     soilLayer.attrib[k] = str(int(round(DATA[k], digits)))
                 else:
                     soilLayer.attrib[k] = str(round(DATA[k], digits))
+
+        if extra_split:
+            # create identical top layer with finer discretization
+            soilLayerExtra = soilLayer.copy()
+            soilLayerExtra.attrib['depth'] = 20
+            soilLayerExtra.attrib['split'] = 4
+
+            self.xml.find('./soil/layers').append(soilLayerExtra) 
+
+            # adjust height of original layer to be consistent
+            soilLayer.attrib['depth'] = 180
+            soilLayer.attrib['split'] = 9 
 
         self.xml.find('./soil/layers').append(soilLayer) 
 
@@ -307,6 +319,9 @@ Help:
 
     parser.add_option("--country", dest="ccode", default=None,
             help="for non-interactive execution provide country code(s) [chain with +]")
+
+    parser.add_option("--extra-split", action="store_true", dest="extrasplit", default=False,
+            help="subdivide the first soil layer (rice sims)")
 
     (options, args) = parser.parse_args()
 
@@ -705,7 +720,12 @@ Help:
 
                     data2[l].pop('topd')
                     data2[l].pop('botd')
-                    site.addSoilLayer( data2[l], litter=False, accuracy=cmap )
+
+
+                    if l == 0 and options.extra_split:
+                        site.addSoilLayer( data2[l], litter=False, accuracy=cmap, extra_split=options.extrasplit )
+                    else:
+                        site.addSoilLayer( data2[l], litter=False, accuracy=cmap )
 
             if addFlag == True:
                 sites.append( site )
