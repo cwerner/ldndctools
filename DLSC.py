@@ -608,6 +608,8 @@ Help:
     print('----------------------------------\n')
 
 
+    ids = np.zeros_like(mask)
+
     if world and options.resolution == 'HR':
         print('\nWARNING  You selected the entire world in high-res as a domain.')
         print('         This will take a loooooooooong time.\n')
@@ -647,6 +649,8 @@ Help:
                     cid = ((len(mask)-1)-j)*M+i
                 else:
                     cid = j*M+i
+
+                ids[j,i] = cid
 
 
                 Lcids.append( cid )
@@ -722,7 +726,7 @@ Help:
                     data2[l].pop('botd')
 
 
-                    if l == 0 and options.extra_split:
+                    if l == 0 and options.extrasplit:
                         site.addSoilLayer( data2[l], litter=False, accuracy=cmap, extra_split=options.extrasplit )
                     else:
                         site.addSoilLayer( data2[l], litter=False, accuracy=cmap )
@@ -756,7 +760,7 @@ Help:
     open( outname, 'w' ).write( strOut )
 
     if DEBUG:
-        print("Writing netCDF file of selected regions:", outname[:-4] + '_mask.nc')
+        print("Writing netCDF file of selected regions:", outname[:-4] + '.nc')
         dout = xr.Dataset()
 
         # mask A
@@ -771,6 +775,11 @@ Help:
             lat1, lat2 = (lat1, lat2) if lat1 < lat2 else (lat2, lat1)
             lon1, lon2 = (lon1, lon2) if lon1 < lon2 else (lon2, lon1)
             dout = dout.sel(lat=slice(lat1, lat2), lon=slice(lon1, lon2))
-        dout.to_netcdf(outname[:-4] + '_mask.nc', format='NETCDF4_CLASSIC')
+        
+        da2 = xr.DataArray(ids, coords=[('lat', lats), ('lon', lons)])
+        da2.name = 'ids'
+        dout['ids'] = da2
+        
+        dout.to_netcdf(outname[:-4] + '.nc', format='NETCDF4_CLASSIC')
 
 
