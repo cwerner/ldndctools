@@ -9,6 +9,6 @@ Tools:
 Sample files for climate data (source: Sheffield et al., Princton, USA) and
 soil data (ISRIC-WISE, NL) are included.
 
-[Christian Werner](mailto:christian.werner@senckenberg.de)  
-SENCKENBERG Bodiversity and Climate Research Centre (BiK-F)  
-2017/10/18  
+[Christian Werner](mailto:christian.werner@kit.edu)  
+IMK-IFU, Karlsruhe Institute of Technology  
+2019/10/13  
