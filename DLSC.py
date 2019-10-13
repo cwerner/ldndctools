@@ -9,9 +9,8 @@
 #        site.xml file
 #
 #
-# Christian Werner (BiK-F)
+# Christian Werner (IMK-IFU, KIT)
 # christian.werner@kit.edu
-#
 
 import xarray as xr
 import numpy as np
@@ -31,6 +30,7 @@ DATASET  = 'created using [D]ynamic [L]andscapeDNDC [S]itefile [C]reator (v0.1)'
 VERSION  = 'v0.1'
 SOURCE   = 'IMK-IFU, KIT'
 
+NODATA = '-99.99'
 
 # XML code / sourced from Vietnam project:
 # preprocessor_v1.py and create_ldndc_site_setup_base.py
@@ -59,8 +59,6 @@ class BaseXML( object ):
             strOut = string.replace(strOut, key, val)
         open(filename, 'w').write(strOut)
 
-
-NODATA = '-99.99'
 
 class SiteXML( BaseXML ):
     def __init__(self, **k):
