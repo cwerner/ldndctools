@@ -91,7 +91,7 @@ class SiteXML( BaseXML ):
         if litter == False:
             DATA['wcmax'],  DATA['wcmin'] = calcHydaulicProperties( DATA )
         
-        dargs = {k:NODATA for k in ['depth,split,ph,scel,bd,sks,norg,corg,clay,wcmax,wcmin,sand,silt,iron'].split(',')}
+        dargs = {k:NODATA for k in 'depth,split,ph,scel,bd,sks,norg,corg,clay,wcmax,wcmin,sand,silt,iron'.split(',')}
         dargs['split'] = '1'
         soilLayer=ET.Element("layer", **dargs)
         keys = DATA.keys()
@@ -213,14 +213,14 @@ def prettify(elem):
 def translateDataFormat( d ):
     """ translate data from nc soil file (pointwise xarray sel) to new naming and units """ 
     data = []
-    size = len(d.lay)  # number of layers (5)
+    size = len(d.lev)  # number of layers (5)
     
     ks = nmap.keys()
     for l in range(size):
         od = {}
         for k in ks:
             name, conv, ignore = nmap[k]
-            od[ name ] = float(d.sel(lay=l)[k]) * conv
+            od[ name ] = float(d.sel(lev=l+1)[k]) * conv
         data.append( od )
     return data
 
@@ -340,35 +340,23 @@ Help:
         options.rcode="c"
     # high-res datasets
     HR_SOIL   = 'soil/GLOBAL_WISESOIL_S1_HR.nc'
-    HR_ADMIN3 = 'tmworld/tmworld_un_HR.nc'
-    HR_ADMIN1 = 'tmworld/tmworld_region_HR.nc'
-    HR_ADMIN2 = 'tmworld/tmworld_subregion_HR.nc'
+    HR_ADMIN  = 'tmworld/tmworld_HR.nc'
     # mid-res datasets
     MR_SOIL   = 'soil/GLOBAL_WISESOIL_S1_MR.nc'
-    MR_ADMIN3 = 'tmworld/tmworld_un_MR.nc'
-    MR_ADMIN1 = 'tmworld/tmworld_region_MR.nc'
-    MR_ADMIN2 = 'tmworld/tmworld_subregion_MR.nc'
+    MR_ADMIN  = 'tmworld/tmworld_MR.nc'
     # low-res datasets 
     LR_SOIL   = 'soil/GLOBAL_WISESOIL_S1_LR.nc'
-    LR_ADMIN3 = 'tmworld/tmworld_un_LR.nc'
-    LR_ADMIN1 = 'tmworld/tmworld_region_LR.nc'
-    LR_ADMIN2 = 'tmworld/tmworld_subregion_LR.nc'
+    LR_ADMIN = 'tmworld/tmworld_LR.nc'
 
     if options.resolution == "HR":
         SOIL  = HR_SOIL
-        ADMIN1 = HR_ADMIN1
-        ADMIN2 = HR_ADMIN2
-        ADMIN3 = HR_ADMIN3
+        ADMIN = HR_ADMIN
     elif options.resolution == "MR":
         SOIL  = MR_SOIL
-        ADMIN1 = MR_ADMIN1
-        ADMIN2 = MR_ADMIN2
-        ADMIN3 = MR_ADMIN3
+        ADMIN = MR_ADMIN
     elif options.resolution == "LR":
         SOIL  = LR_SOIL
-        ADMIN1 = LR_ADMIN1
-        ADMIN2 = LR_ADMIN2
-        ADMIN3 = LR_ADMIN3
+        ADMIN = LR_ADMIN
     else:
         print('Wrong resolution. USe HR, MR or LR.')
         exit(-1)
@@ -395,7 +383,7 @@ Help:
 
 
     # get cell mask from soil/ admin intersect
-    dss      = xr.open_dataset( SOIL  ).sel(lay=1)['AreaFrac']
+    dss      = xr.open_dataset( SOIL  ).sel(lev=1)['PROP1']
     soilmask = np.ma.where(dss.to_masked_array() > 0, 1, 0)
 
     # read lut(s)
@@ -578,9 +566,8 @@ Help:
         print('Country : ', '; '.join( selPrint2 ))
 
 
-    def createMask(ncname, vals, mask=None):
-        ds = xr.open_dataset(ncname)
-        da = ds['Band1'].values
+    def createMask(nc, vals, mask=None):
+        da = nc.values
         if mask is not None:
             mask = np.zeros_like( da )
         for i in vals:
@@ -589,21 +576,21 @@ Help:
         return mask
 
     # get lats, lons
-    ds = xr.open_dataset(ADMIN1)
-    lats = ds['lat'].values
-    lons = ds['lon'].values
+    with xr.open_dataset(ADMIN) as ds:
+        lats = ds['lat'].values
+        lons = ds['lon'].values
 
-    # init empty mask 
-    mask = np.zeros_like( ds['Band1'].values )
+        # init empty mask 
+        mask = np.zeros_like( ds.UN.values )
 
-    # populate mask (incrementally)
-    if len(UNR)  > 0: mask = createMask(ADMIN1, UNR,  mask=mask)
-    if len(UNSR) > 0: mask = createMask(ADMIN2, UNSR, mask=mask)
-    if len(UNC)  > 0: mask = createMask(ADMIN3, UNC,  mask=mask)
+        # populate mask (incrementally)
+        if len(UNR)  > 0: mask = createMask(ds.REGION, UNR,  mask=mask)
+        if len(UNSR) > 0: mask = createMask(ds.SUBREGION, UNSR, mask=mask)
+        if len(UNC)  > 0: mask = createMask(ds.UN, UNC,  mask=mask)
 
-    # if world was selected, use entire mask
-    if world:
-        mask = np.where( ds['Band1'].values > 0, 1, 0)
+        # if world was selected, use entire mask
+        if world:
+            mask = np.where( ds.UN.values > 0, 1, 0)
 
     print('\nNumber of sites/ cells:')
     print(' region mask:', int(np.sum(mask)))
