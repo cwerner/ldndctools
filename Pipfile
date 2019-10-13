@@ -4,9 +4,8 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-xarray = "*"
+xarray = "==0.12.3"
 progressbar = "*"
 "netcdf4" = "*"
 
 [dev-packages]
-
