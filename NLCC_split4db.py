@@ -8,7 +8,7 @@ import sys
 
 climate_dbfile = sys.argv[1]
 
-climate_lines = gzip.open( climate_dbfile, 'rt' ).readlines()
+climate_lines = gzip.open(climate_dbfile, "rt").readlines()
 fileOpen = False
 
 global_header = None
@@ -24,15 +24,12 @@ for lcnt, cl in enumerate(climate_lines):
 
         # sneek-peek at next line to get filename
 
-        next_line = climate_lines[lcnt+1]
+        next_line = climate_lines[lcnt + 1]
 
         if "id" in next_line:
-            theId = int(next_line.split('=')[-1])
-            f = gzip.open("db/climate_%08d.txt.gz" % theId, 'wt')
+            theId = int(next_line.split("=")[-1])
+            f = gzip.open("db/climate_%08d.txt.gz" % theId, "wt")
             f.write(global_header)
             fileOpen = True
     if fileOpen:
         f.write(cl)
-
-
-
