@@ -29,7 +29,7 @@ EMAIL    = 'christian.werner@kit.edu'
 DATE     = str(datetime.datetime.now())
 DATASET  = 'created using [D]ynamic [L]andscapeDNDC [S]itefile [C]reator (v0.1)'
 VERSION  = 'v0.1'
-SOURCE   = 'BIK-F'
+SOURCE   = 'IMK-IFU, KIT'
 
 
 # XML code / sourced from Vietnam project:
@@ -60,23 +60,16 @@ class BaseXML( object ):
         open(filename, 'w').write(strOut)
 
 
-
+NODATA = '-99.99'
 
 class SiteXML( BaseXML ):
     def __init__(self, **k):
         BaseXML.__init__(self)
-        lat   = str(k['lat'])
-        lon   = str(k['lon'])
-        if 'id' in k:
-            theId = "%d" % k['id']
-        else:
-            theId = "0"
-
-        if 'usehistory' in k:
-            theUsehistory = str(k['usehistory'])
-        else:
-            theUsehistory = 'arable'
-
+        
+        lat, lon = str(k['lat']), str(k['lon'])
+        
+        theId = "%d" % k['id'] if 'id' in k else "0"
+        theUsehistory = str(k['usehistory']) if 'usehistory' in k else 'arable'
 
         self.xml = ET.Element( "site", id=theId, lat=lat, lon=lon )
         self.xml.append(self.tags['desc'])
@@ -86,9 +79,10 @@ class SiteXML( BaseXML ):
 
         # soil tags
         soil       = ET.SubElement(self.xml, "soil")
-        ET.SubElement(soil, "general", usehistory=theUsehistory, soil        ='NONE', \
-                                       humus     ='NONE', lheight='0.0',  \
-                                       corg5     ='-99.99', corg30      ='-99.99')
+
+        dargs = dict(usehistory=theUsehistory, soil='NONE', humus='NONE', 
+                     lheight='0.0', corg5=NODATA, corg30=NODATA)
+        ET.SubElement(soil, "general", **dargs)
         layers = ET.SubElement(soil, "layers")
 
     def addSoilLayer(self, DATA, ID=None, litter=False, accuracy={}, extra_split=False):
@@ -97,11 +91,9 @@ class SiteXML( BaseXML ):
         if litter == False:
             DATA['wcmax'],  DATA['wcmin'] = calcHydaulicProperties( DATA )
         
-        soilLayer=ET.Element("layer", depth='-99.99', split ='1', ph  ='-99.99', \
-                                      scel ='-99.99', bd    ='-99.99', sks ='-99.99', \
-                                      norg ='-99.99', corg  ='-99.99', clay='-99.99', \
-                                      wcmax='-99.99', wcmin ='-99.99', sand='-99.99', \
-                                      silt ='-99.99', iron  ='-99.99')
+        dargs = {k:NODATA for k in ['depth,split,ph,scel,bd,sks,norg,corg,clay,wcmax,wcmin,sand,silt,iron'].split(',')}
+        dargs['split'] = '1'
+        soilLayer=ET.Element("layer", **dargs)
         keys = DATA.keys()
         for k in keys:
             digits=2
@@ -129,7 +121,6 @@ class SiteXML( BaseXML ):
 
 
 # ------------------------------------------- F U N C T I O N S --------------------------------------------
-
 def calcLitter(litterMass, litname): # mass in t C ha-1
     if litname == 'MULL':
         density = 0.2;  accumulationFactor = 1.5
