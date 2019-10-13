@@ -303,7 +303,7 @@ Help:
             help="bbox for netCDF output [x1,y1,x2,y2]")
 
     parser.add_option("-r", "--res", dest="resolution", default="HR",
-            help="select resolution: HR (0.083x0.083deg) or LR (0.5x0.5deg)")
+            help="select resolution: HR (0.083deg), MR (0.25deg) or LR (0.5deg)")
 
     parser.add_option("--region", dest="rcode", default=None,
             help="for non-interactive execution provide region code(s) [chain with +]")
@@ -339,13 +339,17 @@ Help:
     if (options.rcode is None) and (options.ccode is not None):
         options.rcode="c"
     # high-res datasets
-    HR_SOIL   = 'soil/GLOBAL_WISESOIL_D1_HR.nc'
+    HR_SOIL   = 'soil/GLOBAL_WISESOIL_S1_HR.nc'
     HR_ADMIN3 = 'tmworld/tmworld_un_HR.nc'
     HR_ADMIN1 = 'tmworld/tmworld_region_HR.nc'
     HR_ADMIN2 = 'tmworld/tmworld_subregion_HR.nc'
-
+    # mid-res datasets
+    MR_SOIL   = 'soil/GLOBAL_WISESOIL_S1_MR.nc'
+    MR_ADMIN3 = 'tmworld/tmworld_un_MR.nc'
+    MR_ADMIN1 = 'tmworld/tmworld_region_MR.nc'
+    MR_ADMIN2 = 'tmworld/tmworld_subregion_MR.nc'
     # low-res datasets 
-    LR_SOIL   = 'soil/GLOBAL_WISESOIL_D1_LR.nc'
+    LR_SOIL   = 'soil/GLOBAL_WISESOIL_S1_LR.nc'
     LR_ADMIN3 = 'tmworld/tmworld_un_LR.nc'
     LR_ADMIN1 = 'tmworld/tmworld_region_LR.nc'
     LR_ADMIN2 = 'tmworld/tmworld_subregion_LR.nc'
@@ -355,18 +359,25 @@ Help:
         ADMIN1 = HR_ADMIN1
         ADMIN2 = HR_ADMIN2
         ADMIN3 = HR_ADMIN3
-
+    elif options.resolution == "MR":
+        SOIL  = MR_SOIL
+        ADMIN1 = MR_ADMIN1
+        ADMIN2 = MR_ADMIN2
+        ADMIN3 = MR_ADMIN3
     elif options.resolution == "LR":
         SOIL  = LR_SOIL
         ADMIN1 = LR_ADMIN1
         ADMIN2 = LR_ADMIN2
         ADMIN3 = LR_ADMIN3
+    else:
+        print('Wrong resolution. USe HR, MR or LR.')
+        exit(-1)
 
     if len( args ) == 0:
         outname = 'sites_%s.xml' % options.resolution
     else:
         outname = args[0]
-        if ('LR' not in outname) and ('HR' not in outname):
+        if ('LR' not in outname) and ('HR' not in outname) and ('MR' not in outname):
             if outname[-4:] == '.xml':
                 outname = outname[:-4] + '_' + options.resolution + '.xml'
             else:
@@ -374,6 +385,8 @@ Help:
 
     if options.resolution == 'LR':
         resStr = '0.5x0.5 deg'
+    elif options.resolution == 'MR':
+        resStr = '0.25x0.25 deg'
     else:
         resStr = '0.0833x0.0833 deg'
 
@@ -624,9 +637,9 @@ Help:
 
     # cid mode
     # if LR: 1000
-    # if HR: 10000
+    # if MR/HR: 10000
 
-    if options.resolution == "HR":
+    if options.resolution in ["HR", "MR"]:
         M = 10000
     else:
         M = 1000
