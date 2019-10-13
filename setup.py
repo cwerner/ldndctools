@@ -6,7 +6,9 @@ from codecs import open
 from os import path
 import re
 
-version = '0.0.1'
+import versioneer
+version=versioneer.get_version()
+cmdclass=versioneer.get_cmdclass()
 
 here = path.abspath(path.dirname(__file__))
 
