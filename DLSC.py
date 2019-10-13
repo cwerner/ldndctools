@@ -3,14 +3,14 @@
 #
 # Use this tool to build XML LDNDC site files
 # __________________________________________________
-# 2016/05/15, christian.werner@senckenberg.de
+# 2019/10/13, christian.werner@kit.edu
 #
 # descr: dynamically select regions and create (arable) LDNDC
 #        site.xml file
 #
 #
 # Christian Werner (BiK-F)
-# christian.werner@senckenberg.de
+# christian.werner@kit.edu
 #
 
 import xarray as xr
@@ -25,7 +25,7 @@ import xml.etree.cElementTree as ET
 #  Default info for this dataset
 # ---------------------------------------------------------------------
 AUTHOR   = 'Christian Werner'
-EMAIL    = 'christian.werner@senckenberg.de'
+EMAIL    = 'christian.werner@kit.edu'
 DATE     = str(datetime.datetime.now())
 DATASET  = 'created using [D]ynamic [L]andscapeDNDC [S]itefile [C]reator (v0.1)'
 VERSION  = 'v0.1'
@@ -331,7 +331,7 @@ Help:
     print()
     print("              ... use this tool to build XML LDNDC site files")
     print("____________________________________________________________________________")
-    print("2016/05/15, christian.werner@senckenberg.de")
+    print("2019/10/13, christian.werner@kit.edu")
     print ()
 
     # delete later

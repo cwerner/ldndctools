@@ -7,13 +7,13 @@ import os, datetime, shutil, string
 import io
 from optparse import OptionParser
 
-# chunked netcdf input speedup 15x comapred to regular netcdf !!!
+# chunked netcdf input speedup 15x compared to regular netcdf !!!
 
 dataInfo = {'title':  'PGF v2 Climate Data',
             'source': 'Princeton University Hydroclimatology Group Bias Corrected 59-yr (1948-2006) Meteorological Forcing Dataset',
             'data':   'PGF v2 0.5 degrees 1901-2012',
             'project': 'not applicable',
-            'contact': 'Christian Werner (christian.werner@senckenberg.de)',
+            'contact': 'Christian Werner (christian.werner@kit.edu)',
             'date':    str(datetime.datetime.today())  }
 
 # -----------------------------------------------------------
@@ -232,7 +232,7 @@ USAGE examples:
 > python NLCC_v01.py -s sites.txt pgf2_dir clim_sites.txt
 
 ___________________________________________
-2016/05/15, christian.werner@senckenberg.de
+2019/10/13, christian.werner@kit.edu
 """)
 
     parser.add_option("-b", "--box", dest="bbox", default=None, 
@@ -265,7 +265,7 @@ ___________________________________________
     print()
     print("            ... use this tool to build TXT LDNDC climate files")
     print("____________________________________________________________________________")
-    print("2016/05/15, christian.werner@senckenberg.de")
+    print("2019/10/13, christian.werner@kit.edu")
     print()
 
     # defaults
