@@ -13,4 +13,4 @@ soil data (ISRIC-WISE, NL) are included.
 IMK-IFU, Karlsruhe Institute of Technology  
 2019/10/13  
 
-[![Latest Release](https://img.shields.io/github/tag/ellipsis/ellipsis-compiler.svg)]
+[![Latest Release](https://img.shields.io/github/tag/cwerner/ldndctools.svg)]
