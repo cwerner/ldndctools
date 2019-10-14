@@ -1,3 +1,2 @@
 .DS_Store
-versioneer.py
-ldndctools/_version.py
+*.pyc
