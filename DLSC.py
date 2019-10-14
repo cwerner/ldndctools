@@ -337,6 +337,14 @@ Help:
     )
 
     parser.add_option(
+        "-f",
+        "--file",
+        dest="file",
+        default=None,
+        help="infile with lat lon coordinates",
+    )
+
+    parser.add_option(
         "-r",
         "--res",
         dest="resolution",
@@ -383,9 +391,15 @@ Help:
 
     # delete later
     DEBUG = True
+    INTERACTIVE = True
 
-    if (options.rcode is not None) or (options.ccode is not None):
+    if (
+        (options.rcode is not None)
+        or (options.ccode is not None)
+        or (options.file is not None)
+    ):
         print("Non-interactive mode...")
+        INTERACTIVE = False
 
     # query environment or command flags for selection (non-intractive mode)
     options.rcode = os.environ.get("DLSC_REGION", options.rcode)
@@ -422,8 +436,6 @@ Help:
     dss = xr.open_dataset(SOIL).sel(lev=1)["PROP1"]
     soilmask = np.ma.where(dss.to_masked_array() > 0, 1, 0)
 
-    # read lut(s)
-
     # countries
     df = pd.read_csv("data/tmworld/tmworld_full_lut.txt", sep="\t")
 
@@ -447,163 +459,171 @@ Help:
     dfsr = pd.read_csv("data/tmworld/tmworld_subregions_lut.txt", sep="\t")
     Dsubregions = dict(zip(dfsr.SR_Name, dfsr.SR_Code))
 
-    print("\nPlease make your region/ country selection [use codes]")
-    print('Multiple selections are allowed [i.e. "12+13+17"]\n')
-    print('If you want to include a specific country type "c" in selection.')
-    print('You can also add a country to a region [i.e. "27+c"]')
-    print("\nRegions:")
-    seq1 = sorted(Dregions.keys())
-    print_table(seq1, 1)
-
-    print("Sub-Regions:")
-    seq2 = sorted(Dsubregions.keys())
-
-    print_table(seq2, 3, base=len(seq1))
-
-    # manually add some regions:
-
-    print("Special:")
-    seq_extra = ["EU28", "WORLD"]
-    print_table(seq_extra, 1, base=len(seq1) + len(seq2))
-    seq2.append("EU28")  # 2nd last
-    seq2.append("WORLD")  # last
-
-    # INPUT LOOP
-    showCountries = False
-    repeat = True
-    valItems = []
-
-    # special flags (TODO: cleanup later)
-    eu28 = False
-    world = False
-
-    # (sub-)region selection section
-    while repeat:
-        # query if not set programatically
-        if options.rcode in [None]:
-            x = input("Select (sub-)region (multiple: +; c: add countries): ")
-        else:
-            x = options.rcode
-
-        if x == "":
-            showCountries = True
-            break
-
-        if "+" in x:
-            items = x.split("+")
-        else:
-            items = [x]
-
-        print(items)
-
-        # validate items
-        for it in items:
-            if it.lower() == "c":
-                showCountries = True
-                repeat = False
-            else:
-                try:
-                    I = int(it)
-                    if I in range(len(seq1) + len(seq2)):
-                        repeat = False
-
-                        # catch specific regions and pass to country selector
-                        if I == range(len(seq1) + len(seq2))[-2]:
-                            eu28 = True
-                        elif I == range(len(seq1) + len(seq2))[-1]:
-                            world = True
-                        else:
-                            valItems.append(I)
-                    else:
-                        print(
-                            "Invalid Entry (0...%d) %d" % (len(seq1) + len(seq2) - 1, I)
-                        )
-
-                except ValueError:
-                    print("Invalid Entry")
-
     # lists with selection ids for tmworld netcdfs
     UNR = []
     UNSR = []
     UNC = []
 
-    # create human-readable selection lists
-    selPrint1 = []
-    selPrint2 = []
-    for I in valItems:
-        if I < len(seq1):
-            reg = seq1[I]
-            UNR.append(Dregions[reg])
-            selPrint1.append(reg)
-        else:
-            reg = seq2[I - len(seq1)]
-            UNSR.append(Dsubregions[reg])
-            selPrint1.append(reg)
+    # special flags (TODO: cleanup later)
+    eu28 = False
+    world = False
 
-    # special case EU28
-    if eu28:
-        selPrint1.append("EU28")
-    if world:
-        selPrint1.append("WORLD")
+    if options.rcode:
+        UNR.append(options.rcode)
+    if options.ccode:
+        UNC.append(options.ccode)
 
-    # country selection section
-    if showCountries == True:
-        print("\nCountries:")
+    if INTERACTIVE:
 
-        seq3 = sorted(Dcountries.keys())
+        print("\nPlease make your region/ country selection [use codes]")
+        print('Multiple selections are allowed [i.e. "12+13+17"]\n')
+        print('If you want to include a specific country type "c" in selection.')
+        print('You can also add a country to a region [i.e. "27+c"]')
+        print("\nRegions:")
+        seq1 = sorted(Dregions.keys())
+        print_table(seq1, 1)
 
-        # shorten long print columns
-        def shorten(x):
-            maxL = 25
-            if len(x) >= maxL:
-                x = x[: maxL - 3] + "..."
-            return x
+        print("Sub-Regions:")
+        seq2 = sorted(Dsubregions.keys())
 
-        seqPrint = [shorten(k) for k, v in Dcountries.items()]
-        print_table(sorted(seqPrint), 3)
+        print_table(seq2, 3, base=len(seq1))
 
+        # manually add some regions:
+
+        print("Special:")
+        seq_extra = ["EU28", "WORLD"]
+        print_table(seq_extra, 1, base=len(seq1) + len(seq2))
+        seq2.append("EU28")  # 2nd last
+        seq2.append("WORLD")  # last
+
+        # INPUT LOOP
+        showCountries = False
         repeat = True
+        valItems = []
 
+        # (sub-)region selection section
         while repeat:
             # query if not set programatically
-            if options.ccode is None:
-                x = input("Select country (multiple: +): ")
+            if options.rcode in [None]:
+                x = input("Select (sub-)region (multiple: +; c: add countries): ")
             else:
-                x = options.ccode
+                x = options.rcode
+
+            if x == "":
+                showCountries = True
+                break
 
             if "+" in x:
                 items = x.split("+")
             else:
                 items = [x]
 
+            print(items)
+
             # validate items
-            valItems = []
             for it in items:
-                try:
-                    I = int(it)
-                    if I in range(len(seq3)):
-                        repeat = False
-                        valItems.append(I)
-                        reg = seq3[I]
-                        UNC.append(Dcountries[reg])
-                        selPrint2.append(reg)
+                if it.lower() == "c":
+                    showCountries = True
+                    repeat = False
+                else:
+                    try:
+                        I = int(it)
+                        if I in range(len(seq1) + len(seq2)):
+                            repeat = False
 
-                    else:
-                        print("Invalid Entry (0...%d) %d" % (len(seq3) - 1, I))
+                            # catch specific regions and pass to country selector
+                            if I == range(len(seq1) + len(seq2))[-2]:
+                                eu28 = True
+                            elif I == range(len(seq1) + len(seq2))[-1]:
+                                world = True
+                            else:
+                                valItems.append(I)
+                        else:
+                            print(
+                                "Invalid Entry (0...%d) %d"
+                                % (len(seq1) + len(seq2) - 1, I)
+                            )
 
-                except ValueError:
-                    print("Invalid Entry")
+                    except ValueError:
+                        print("Invalid Entry")
 
-    # if eu28 was selected add those ids now
-    if eu28 == True:
-        UNC += Dextracountries.values()
+        # create human-readable selection lists
+        selPrint1 = []
+        selPrint2 = []
+        for I in valItems:
+            if I < len(seq1):
+                reg = seq1[I]
+                UNR.append(Dregions[reg])
+                selPrint1.append(reg)
+            else:
+                reg = seq2[I - len(seq1)]
+                UNSR.append(Dsubregions[reg])
+                selPrint1.append(reg)
 
-    print("\n----------------------------------")
-    print("SELECTION")
-    if len(selPrint1) > 0:
-        print("Region  : ", "; ".join(selPrint1))
-    if len(selPrint2) > 0:
-        print("Country : ", "; ".join(selPrint2))
+        # special case EU28
+        if eu28:
+            selPrint1.append("EU28")
+        if world:
+            selPrint1.append("WORLD")
+
+        # country selection section
+        if showCountries == True:
+            print("\nCountries:")
+
+            seq3 = sorted(Dcountries.keys())
+
+            # shorten long print columns
+            def shorten(x):
+                maxL = 25
+                if len(x) >= maxL:
+                    x = x[: maxL - 3] + "..."
+                return x
+
+            seqPrint = [shorten(k) for k, v in Dcountries.items()]
+            print_table(sorted(seqPrint), 3)
+
+            repeat = True
+
+            while repeat:
+                # query if not set programatically
+                if options.ccode is None:
+                    x = input("Select country (multiple: +): ")
+                else:
+                    x = options.ccode
+
+                if "+" in x:
+                    items = x.split("+")
+                else:
+                    items = [x]
+
+                # validate items
+                valItems = []
+                for it in items:
+                    try:
+                        I = int(it)
+                        if I in range(len(seq3)):
+                            repeat = False
+                            valItems.append(I)
+                            reg = seq3[I]
+                            UNC.append(Dcountries[reg])
+                            selPrint2.append(reg)
+
+                        else:
+                            print("Invalid Entry (0...%d) %d" % (len(seq3) - 1, I))
+
+                    except ValueError:
+                        print("Invalid Entry")
+
+        # if eu28 was selected add those ids now
+        if eu28 == True:
+            UNC += Dextracountries.values()
+
+        print("\n----------------------------------")
+        print("SELECTION")
+        if len(selPrint1) > 0:
+            print("Region  : ", "; ".join(selPrint1))
+        if len(selPrint2) > 0:
+            print("Country : ", "; ".join(selPrint2))
 
     def createMask(nc, vals, mask=None):
         da = nc.values
@@ -614,6 +634,16 @@ Help:
 
         return mask
 
+    # file mode: create mask from coordinates
+    def createMask_fromfile(ds, infile):
+        df = pd.read_csv(infile, delim_whitespace=True)
+        x = ds.sel(lat=list(df.lat), lon=list(df.lon), method="nearest")
+        ds_x = xr.zeros_like(ds)
+        for _, r in df.iterrows():
+            ds_x.loc[dict(lon=r.lon, lat=r.lat, method="nearest")] = 1
+
+        return ds_x.values
+
     # get lats, lons
     with xr.open_dataset(ADMIN) as ds:
         lats = ds["lat"].values
@@ -621,6 +651,10 @@ Help:
 
         # init empty mask
         mask = np.zeros_like(ds.UN.values)
+
+        # use coords from file
+        if options.file:
+            mask = createMask_fromfile(ds.UN, options.file)
 
         # populate mask (incrementally)
         if len(UNR) > 0:
