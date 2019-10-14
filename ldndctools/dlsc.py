@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Dynamic LandscapeDNDC Sitefile Creator (DLSC v0.1)
+# Dynamic LandscapeDNDC Sitefile Creator (DLSC)
 #
 # Use this tool to build XML LDNDC site files
 # __________________________________________________
@@ -525,7 +525,7 @@ Help:
     for j in range(len(mask)):
         for i in range(len(mask[0])):
             if mask[j, i] == 1:
-                if LATS[0] < 0.0:
+                if LATS[0] < LATS[-1]:
                     cid = ((len(mask) - 1) - j) * M + i
                 else:
                     cid = j * M + i
@@ -535,19 +535,14 @@ Help:
                 Lcids.append(cid)
                 Lix.append(i)
                 Ljx.append(j)
-                # Dcids[(ds.coords['lat'].values[j], ds.coords['lon'].values[i])] = cid
                 Dcids[(LATS[j], ds.coords["lon"].values[i])] = cid
 
-    # print(list(Dcids.items())[0])
+    # punch out soil id coordinate (by segment of 200 cells max. each for speed reasons)
+    CHUCK = 200
 
-    # punch out soil id coordinate (by segment of 1000 cells max. each for speed reasons)
-    COORDTHRESHOLD = 200
-
-    Lcids2d = [
-        Lcids[i : i + COORDTHRESHOLD] for i in range(0, len(Lcids), COORDTHRESHOLD)
-    ]
-    Lix2d = [Lix[i : i + COORDTHRESHOLD] for i in range(0, len(Lix), COORDTHRESHOLD)]
-    Ljx2d = [Ljx[i : i + COORDTHRESHOLD] for i in range(0, len(Ljx), COORDTHRESHOLD)]
+    Lcids2d = [Lcids[i : i + CHUCK] for i in range(0, len(Lcids), CHUCK)]
+    Lix2d = [Lix[i : i + CHUCK] for i in range(0, len(Lix), CHUCK)]
+    Ljx2d = [Ljx[i : i + CHUCK] for i in range(0, len(Ljx), CHUCK)]
 
     sites = []
     sbCnt = 1
