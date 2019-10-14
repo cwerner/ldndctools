@@ -1,52 +1,66 @@
 # -*- coding: utf-8 -*-
 
-from setuptools import setup, find_packages
+import versioneer
+from setuptools import find_packages, setup
 
-from codecs import open
 from os import path
 import re
 
-import versioneer
+DISTNAME = "ldndctools"
+LICENSE = "Apache"
+AUTHOR = "Christian Werner"
+AUTHOR_EMAIL = "christian.werner@kit.edu"
+URL = "https://github.com/cwerner/ldndctools"
+DESCRIPTION = "Preprocessing tools for LandscapeDNDC"
+CLASSIFIERS = [
+    "Development Status :: 3 - Alpha",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Topic :: Scientific/Engineering",
+]
 
-version = versioneer.get_version()
-cmdclass = versioneer.get_cmdclass()
+PYTHON_REQUIRES = ">=3.6"
 
 here = path.abspath(path.dirname(__file__))
 
 # Get the long description from the README file
 with open(path.join(here, "README.md"), encoding="utf-8") as f:
-    long_descr = f.read()
+    LONG_DESCRIPTION = f.read()
 
 # get the dependencies and installs
 with open(path.join(here, "requirements.txt"), encoding="utf-8") as f:
     all_reqs = f.read().split("\n")
 
-install_requires = [x.strip() for x in all_reqs if "git+" not in x]
+INSTALL_REQUIRES = [x.strip() for x in all_reqs if "git+" not in x]
 dependency_links = [x.strip().replace("git+", "") for x in all_reqs if "git+" not in x]
 
-
 setup(
-    name="ldndctools",
-    version=version,
-    description="This package contains preprocessing tools for LandscapeDNDC",
-    long_description=long_descr,
-    url="https://github.com/cwerner/ldndctools",
-    author="Christian Werner",
-    author_email="christian.werner@kit.edu",
-    license="ND",
-    download_url="https://github.com/cwerner/ldndctools.git",
-    classifiers=[
-        "Development Status :: 3 - Alpha",
-        "Intended Audience :: LandscapeDNDC scientists",
-        "Programming Language :: Python :: 3",
-    ],
-    keywords="LandscapeDNDC preprocessing input-generator",
-    zip_safe=False,
+    name=DISTNAME,
+    version=versioneer.get_version(),
+    cmdclass=versioneer.get_cmdclass(),
+    license=LICENSE,
+    author=AUTHOR,
+    author_email=AUTHOR_EMAIL,
+    classifiers=CLASSIFIERS,
+    description=DESCRIPTION,
+    long_description=LONG_DESCRIPTION,
+    url=URL,
     packages=find_packages(exclude=["docs", "tests"]),
-    install_requires=install_requires,
+    install_requires=INSTALL_REQUIRES,
     package_dir={"ldndctools": "ldndctools"},
     package_data={"ldndctools": ["data/misc", "data/soil", "data/tmworld"]},
     include_package_data=True,
-    scripts=["nlcc.py", "nlcc_split4db.py", "dlsc.py"],
+    entry_points={
+        "console_scripts": [
+            "dlsc=ldndctools.dlsc:main",
+            "nlcc=ldndctools.nlcc:main",
+            "nlcc_split4db=ldndctools.nlcc_split4db:main",
+        ]
+    },
     dependency_links=dependency_links,
 )
