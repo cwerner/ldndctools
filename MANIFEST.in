@@ -1,5 +1,5 @@
 include *.md
-include LICENSE.txt
+include LICENSE
 recursive-include data *
 include versioneer.py
 include ldndctools/_version.py
