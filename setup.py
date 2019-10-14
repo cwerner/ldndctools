@@ -51,8 +51,9 @@ setup(
     zip_safe=False,
     packages=find_packages(exclude=["docs", "tests"]),
     install_requires=install_requires,
-    package_dir={"ldndctools": ["misc", "soil", "tmworld"]},
+    package_dir={"ldndctools": "ldndctools"},
+    package_data={"ldndctools": ["data/misc", "data/soil", "data/tmworld"]},
     include_package_data=True,
-    scripts=["NLCC.py", "NLCC_split4db.py", "DLSC.py"],
+    scripts=["nlcc.py", "nlcc_split4db.py", "dlsc.py"],
     dependency_links=dependency_links,
 )
