@@ -13,16 +13,9 @@ cmdclass = versioneer.get_cmdclass()
 
 here = path.abspath(path.dirname(__file__))
 
-readme_file = "README.md"
-try:
-    from pypandoc import convert
-
-    long_descr = convert(readme_file, "rst", "md")
-    with open(path.join(here, "README.rst"), "w", encoding="utf-8") as f:
-        f.write(long_descr)
-except ImportError:
-    print("warning: pypandoc module not found, could not convert Markdown to RST")
-    long_descr = open(readme_file).read()
+# Get the long description from the README file
+with open(path.join(here, "README.md"), encoding="utf-8") as f:
+    long_descr = f.read()
 
 # get the dependencies and installs
 with open(path.join(here, "requirements.txt"), encoding="utf-8") as f:
