@@ -394,27 +394,15 @@ Help:
     # single country selection
     if (options.rcode is None) and (options.ccode is not None):
         options.rcode = "c"
-    # high-res datasets
-    HR_SOIL = "soil/GLOBAL_WISESOIL_S1_HR.nc"
-    HR_ADMIN = "tmworld/tmworld_HR.nc"
-    # mid-res datasets
-    MR_SOIL = "soil/GLOBAL_WISESOIL_S1_MR.nc"
-    MR_ADMIN = "tmworld/tmworld_MR.nc"
-    # low-res datasets
-    LR_SOIL = "soil/GLOBAL_WISESOIL_S1_LR.nc"
-    LR_ADMIN = "tmworld/tmworld_LR.nc"
 
-    if options.resolution == "HR":
-        SOIL = HR_SOIL
-        ADMIN = HR_ADMIN
-    elif options.resolution == "MR":
-        SOIL = MR_SOIL
-        ADMIN = MR_ADMIN
-    elif options.resolution == "LR":
-        SOIL = LR_SOIL
-        ADMIN = LR_ADMIN
+    dres = dict(LR="0.5x0.5deg", MR="0.25x0.25deg", HR="0.0833x0.0833deg")
+
+    if options.resolution in ["LR", "MR", "HR"]:
+        SOIL = f"data/soil/GLOBAL_WISESOIL_S1_{options.resolution}.nc"
+        ADMIN = f"data/tmworld/tmworld_{options.resolution}.nc"
+        resStr = dres[options.resolution]
     else:
-        print("Wrong resolution. USe HR, MR or LR.")
+        print(f"Wrong resolution: {options.resolution}. Use HR, MR or LR.")
         exit(-1)
 
     if len(args) == 0:
@@ -427,13 +415,6 @@ Help:
             else:
                 outname = outname + "_" + options.resolution + ".xml"
 
-    if options.resolution == "LR":
-        resStr = "0.5x0.5 deg"
-    elif options.resolution == "MR":
-        resStr = "0.25x0.25 deg"
-    else:
-        resStr = "0.0833x0.0833 deg"
-
     print("Soil resolution: %s [%s]" % (options.resolution, resStr))
     print("Outfile name:   ", outname)
 
@@ -444,7 +425,7 @@ Help:
     # read lut(s)
 
     # countries
-    df = pd.read_csv("tmworld/tmworld_full_lut.txt", sep="\t")
+    df = pd.read_csv("data/tmworld/tmworld_full_lut.txt", sep="\t")
 
     # eu28 specific
     eu28 = "BE,DE,FR,IT,LU,NL,DK,IE,GB,GR,PT,ES,FI,AT,SE,EE,LV,LT,MT,PL,SK,SI,CZ,HU,CY,BG,RO,HR".split(
@@ -459,11 +440,11 @@ Help:
     Dcountries = dict(zip(df.NAME, df.UN))
 
     # regions
-    dfr = pd.read_csv("tmworld/tmworld_regions_lut.txt", sep="\t")
+    dfr = pd.read_csv("data/tmworld/tmworld_regions_lut.txt", sep="\t")
     Dregions = dict(zip(dfr.R_Name, dfr.R_Code))
 
     # subregions
-    dfsr = pd.read_csv("tmworld/tmworld_subregions_lut.txt", sep="\t")
+    dfsr = pd.read_csv("data/tmworld/tmworld_subregions_lut.txt", sep="\t")
     Dsubregions = dict(zip(dfsr.SR_Name, dfsr.SR_Code))
 
     print("\nPlease make your region/ country selection [use codes]")
