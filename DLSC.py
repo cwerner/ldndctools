@@ -208,9 +208,7 @@ def calcHydaulicProperties(D):
     except:
         print(D)
     vGn = math.e ** logN
-    vGm = (
-        1.0
-    )  # (1.0 - (1.0/ vGn)) disabled as we do not use texture classes but real fractions
+    vGm = 1.0  # (1.0 - (1.0/ vGn)) disabled as we do not use texture classes but real fractions
 
     FLDcap = ThetaR + (ThetaS - ThetaR) / math.pow(
         (1.0 + math.pow(ALPHA * 100.0, vGn)), vGm
