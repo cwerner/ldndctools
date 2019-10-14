@@ -314,8 +314,7 @@ class MyParser(OptionParser):
         return self.epilog
 
 
-if __name__ == "__main__":
-
+def main():
     parser = MyParser(
         "usage: %prog [options] outfile",
         epilog="""
@@ -864,3 +863,7 @@ Help:
         dout["ids"] = da2
 
         dout.to_netcdf(outname[:-4] + ".nc", format="NETCDF4_CLASSIC")
+
+
+if __name__ == "__main__":
+    main()
