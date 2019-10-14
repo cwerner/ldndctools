@@ -20,120 +20,35 @@ from optparse import OptionParser
 import xml.dom.minidom as MD
 import xml.etree.cElementTree as ET
 
+from ldndctools import __version__
+
+from ldndctools.misc.xmlclasses import SiteXML
+
 # ---------------------------------------------------------------------
 #  Default info for this dataset
 # ---------------------------------------------------------------------
 AUTHOR = "Christian Werner"
 EMAIL = "christian.werner@kit.edu"
 DATE = str(datetime.datetime.now())
-DATASET = "created using [D]ynamic [L]andscapeDNDC [S]itefile [C]reator (v0.1)"
-VERSION = "v0.1"
+DATASET = (
+    f"created using [D]ynamic [L]andscapeDNDC [S]itefile [C]reator ({__version__})"
+)
+VERSION = __version__
 SOURCE = "IMK-IFU, KIT"
+
+BASEINFO = dict(
+    AUTHOR=AUTHOR,
+    EMAIL=EMAIL,
+    DATE=DATE,
+    DATASET=DATASET,
+    VERSION=VERSION,
+    SOURCE=SOURCE,
+)
 
 NODATA = "-99.99"
 
 # XML code / sourced from Vietnam project:
 # preprocessor_v1.py and create_ldndc_site_setup_base.py
-
-
-class BaseXML(object):
-    def __init__(self, startY=2000, endY=2012):
-        self.xml = None  # ET.Element("setups"), define by child
-        self.startY = startY
-        self.endY = endY
-        self.tags = {}
-        # --- dict of initial xml tags
-        desc = ET.Element("description")
-        e = ET.SubElement(desc, "author")
-        e.text = AUTHOR
-        e = ET.SubElement(desc, "email")
-        e.text = EMAIL
-        e = ET.SubElement(desc, "date")
-        e.text = DATE
-        e = ET.SubElement(desc, "dataset")
-        e.text = DATASET
-        e = ET.SubElement(desc, "version")
-        e.text = VERSION
-        e = ET.SubElement(desc, "source")
-        e.text = SOURCE
-        self.tags["desc"] = desc
-
-    def write(self, ID=None, filename="all.xml"):
-        strOut = MD.parseString(ET.tostring(self.xml)).toprettyxml()
-        # fix special characters
-        sc = {"&gt;": ">", "&lt;": "<"}
-        for key, val in sc.items():
-            strOut = string.replace(strOut, key, val)
-        open(filename, "w").write(strOut)
-
-
-class SiteXML(BaseXML):
-    def __init__(self, **k):
-        BaseXML.__init__(self)
-
-        lat, lon = str(k["lat"]), str(k["lon"])
-
-        theId = "%d" % k["id"] if "id" in k else "0"
-        theUsehistory = str(k["usehistory"]) if "usehistory" in k else "arable"
-
-        self.xml = ET.Element("site", id=theId, lat=lat, lon=lon)
-        self.xml.append(self.tags["desc"])
-
-        # gernal tags
-        general = ET.SubElement(self.xml, "general")
-
-        # soil tags
-        soil = ET.SubElement(self.xml, "soil")
-
-        dargs = dict(
-            usehistory=theUsehistory,
-            soil="NONE",
-            humus="NONE",
-            lheight="0.0",
-            corg5=NODATA,
-            corg30=NODATA,
-        )
-        ET.SubElement(soil, "general", **dargs)
-        layers = ET.SubElement(soil, "layers")
-
-    def addSoilLayer(self, DATA, ID=None, litter=False, accuracy={}, extra_split=False):
-        """ this adds a soil layer to the given site (to current if no ID given)"""
-        # only calculate hydr. properties if we have a mineral soil layer added
-        if litter == False:
-            DATA["wcmax"], DATA["wcmin"] = calcHydaulicProperties(DATA)
-
-        dargs = {
-            k: NODATA
-            for k in "depth,split,ph,scel,bd,sks,norg,corg,clay,wcmax,wcmin,sand,silt,iron".split(
-                ","
-            )
-        }
-        dargs["split"] = "1"
-        soilLayer = ET.Element("layer", **dargs)
-        keys = DATA.keys()
-        for k in keys:
-            digits = 2
-            if k in accuracy.keys():
-                digits = accuracy[k]
-                if digits == 0:
-                    # int
-                    soilLayer.attrib[k] = str(int(round(DATA[k], digits)))
-                else:
-                    soilLayer.attrib[k] = str(round(DATA[k], digits))
-
-        if extra_split:
-            # create identical top layer with finer discretization
-            soilLayerExtra = soilLayer.copy()
-            soilLayerExtra.attrib["depth"] = 20
-            soilLayerExtra.attrib["split"] = 4
-
-            self.xml.find("./soil/layers").append(soilLayerExtra)
-
-            # adjust height of original layer to be consistent
-            soilLayer.attrib["depth"] = 180
-            soilLayer.attrib["split"] = 9
-
-        self.xml.find("./soil/layers").append(soilLayer)
 
 
 # ------------------------------------------- F U N C T I O N S --------------------------------------------
@@ -174,64 +89,6 @@ def calcHeight(TK, N):
     else:
         layerHeight = -9999
     return (TKmm, layerHeight)
-
-
-def calcHydaulicProperties(D):
-    """ Calc hydraulic properties based on et al. (1996) """
-    # shape parameters Woesten et al. (1999) Geoderma
-    #
-    # OM      (% organic matter)
-    # D       (bulk denisty)
-    # topsoil 1, subsoil 0
-    # C, S,   (clay, silt in %)
-    #
-    # ThetaS = 0.7919 + 0.001691 * C - 0.29619 * D - 0.000001491 * S*S + 0.0000821 * OM * OM + 0.02427 * C**-1 + 0.01113 * S**-1 + \
-    #         0.01472 * math.ln( S ) - 0.0000733 * OM * C - 0.000619 * D * C - 0.001183 * D * OM - 0.0001664 * topsoil * S
-
-    # ad-hoc AG Boden
-    #
-    # Sand, Clay [%], BD [g cm-3], corg [%]
-
-    corg = D["corg"] * 100
-    clay = D["clay"] * 100
-    sand = D["sand"] * 100
-    bd = float(D["bd"])
-
-    ThetaR = 0.015 + 0.005 * clay + 0.014 * corg
-    ThetaS = 0.81 - 0.283 * bd + 0.001 * clay
-
-    logAlpha = -2.486 + 0.025 * sand - 0.351 * corg - 2.617 * bd - 0.023 * clay
-    logN = 0.053 - 0.009 * sand - 0.013 * clay + 0.00015 * sand ** 2
-
-    try:
-        ALPHA = math.e ** logAlpha
-    except:
-        print(D)
-    vGn = math.e ** logN
-    vGm = 1.0  # (1.0 - (1.0/ vGn)) disabled as we do not use texture classes but real fractions
-
-    FLDcap = ThetaR + (ThetaS - ThetaR) / math.pow(
-        (1.0 + math.pow(ALPHA * 100.0, vGn)), vGm
-    )
-    WILTpt = ThetaR + (ThetaS - ThetaR) / math.pow(
-        (1.0 + math.pow(ALPHA * 15800.0, vGn)), vGm
-    )
-    return FLDcap * 1000, WILTpt * 1000
-
-
-def prettify(elem):
-    """Return a pretty-printed XML string for the Element.
-    """
-    rough_string = ET.tostring(elem, "utf-8")
-    reparsed = MD.parseString(rough_string)
-    str1 = reparsed.toprettyxml(indent="  ")
-    str2 = []
-    ss = str1.split("\n")
-    for s in ss:
-        x = "".join(s.split())
-        if x != "":
-            str2.append(s)
-    return "\n".join(str2) + "\n"
 
 
 def translateDataFormat(d):
@@ -773,6 +630,7 @@ Help:
                 lat=float(d.lat),
                 lon=float(d.lon),
                 id=Dcids[(float(d.lat), float(d.lon))],
+                **BASEINFO,
             )  # id=Lcids[int(dp)] )
 
             # take point selection and return dict with modified data naming and units
