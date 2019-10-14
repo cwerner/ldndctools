@@ -1,3 +1,5 @@
+![Latest Release](https://img.shields.io/github/tag/cwerner/ldndctools.svg) 
+
 # LandscapeDNDC preprocessing tools
 
 A set of site and climate preprocessing tools (not in a nice python package yet).
@@ -13,4 +15,3 @@ soil data (ISRIC-WISE, NL) are included.
 IMK-IFU, Karlsruhe Institute of Technology  
 2019/10/13  
 
-![Latest Release](https://img.shields.io/github/tag/cwerner/ldndctools.svg)
