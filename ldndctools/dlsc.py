@@ -84,18 +84,16 @@ def print_table(seq, columns=2, base=0):
     )
     labels = labels.T
 
-    vals = []
-    keys = []
+    vals, keys, t = [], [], []
 
     for i in range(len(labels[0])):
         for j in range(len(labels)):
             la = i * len(labels) + j + base
             if labels[j, i] != "":
                 vals.append(labels[j, i])
-                labels[j, i] = "[%d] " % la + labels[j, i]
+                labels[j, i] = f"[{la}] {labels[j, i]}"
                 keys.append(la)
 
-    t = []
     for row in labels:
         t.append("".join([x.ljust(35) for x in row]))
 
@@ -154,7 +152,7 @@ def main():
     else:
         outname = args.outfile
         if ("LR" not in outname) and ("HR" not in outname) and ("MR" not in outname):
-            if outname[-4:] == ".xml":
+            if outname.endswith(".xml"):
                 outname = outname[:-4] + "_" + args.resolution + ".xml"
             else:
                 outname = outname + "_" + args.resolution + ".xml"
@@ -361,13 +359,10 @@ def main():
         ds_x = xr.zeros_like(ds)
         for _, r in df.iterrows():
             ds_x.loc[dict(lon=r.lon, lat=r.lat, method="nearest")] = 1
-
         return ds_x.values
 
-    # get lats, lons
     with xr.open_dataset(ADMIN) as ds:
-        lats = ds["lat"].values
-        lons = ds["lon"].values
+        lats, lons = ds.lat.values, ds.lon.values
 
         # init empty mask
         mask = np.zeros_like(ds.UN.values)
@@ -410,20 +405,11 @@ def main():
     # iterate over mask to build XML
     ds = xr.open_dataset(SOIL)
 
-    Lcids = []
-    Lix = []
-    Ljx = []
-
+    Lcids, Lix, Ljx = [], [], []
     Dcids = {}
 
-    # cid mode
-    # if LR: 1000
-    # if MR/HR: 10000
-
-    if args.resolution in ["HR", "MR"]:
-        M = 10000
-    else:
-        M = 1000
+    # cid mode LR: 1000, MR/HR: 10000
+    M = 10000 if args.resolution in ["HR", "MR"] else 1000
 
     LATS = ds.coords["lat"].values
 
@@ -438,7 +424,6 @@ def main():
                 Ljx.append(j)
                 Dcids[(LATS[j], ds.coords["lon"].values[i])] = cid
 
-    # punch out soil id coordinate (by segment of 200 cells max. each for speed reasons)
     CHUCK = 200
 
     def create_chunks(l):
@@ -450,7 +435,6 @@ def main():
 
     sites = []
     sbCnt = 1
-
     cnt = 0
 
     bar = pb.ProgressBar(
@@ -567,9 +551,8 @@ def main():
             lon1, lon2 = (lon1, lon2) if lon1 < lon2 else (lon2, lon1)
             dout = dout.sel(lat=slice(lat1, lat2), lon=slice(lon1, lon2))
 
-        da2 = xr.DataArray(ids, coords=[("lat", lats), ("lon", lons)])
-        da2.name = "ids"
-        dout["ids"] = da2
+        da2 = xr.DataArray(ids, coords=[("lat", lats), ("lon", lons)], name="ids")
+        dout[da2.name] = da2
 
         dout.to_netcdf(outname[:-4] + ".nc", format="NETCDF4_CLASSIC")
 
