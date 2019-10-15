@@ -3,5 +3,6 @@ numpy
 pandas
 pyyaml
 progressbar
-xarray==0.12.3
+xarray
+
 
