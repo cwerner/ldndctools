@@ -134,7 +134,7 @@ def main():
         epilog="""
 
 Example usage:
-python DLSC_v0.1py -r HR sites_EU28.xml
+dlsc -r LR sites_EU28.xml
 
 Help:
 -h, --help
