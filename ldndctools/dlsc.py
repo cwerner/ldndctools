@@ -130,11 +130,11 @@ def main():
         VERSION=_get_cfg_item("project", "version", save="0.1"),
         SOURCE=_get_cfg_item("project", "source"),
     )
-    print(BASEINFO)
+
     INTERACTIVE = True
 
     if (args.rcode is not None) or (args.ccode is not None) or (args.file is not None):
-        print("Non-interactive mode...")
+        log.info("Non-interactive mode...")
         INTERACTIVE = False
 
     # query environment or command flags for selection (non-intractive mode)
@@ -152,11 +152,11 @@ def main():
         ADMIN = DATA / "tmworld" / f"tmworld_{args.resolution}.nc"
         resStr = dres[args.resolution]
     else:
-        print(f"Wrong resolution: {args.resolution}. Use HR, MR or LR.")
+        log.error(f"Wrong resolution: {args.resolution}. Use HR, MR or LR.")
         exit(-1)
 
     if not args.outfile:
-        outname = "sites_%s.xml" % args.resolution
+        outname = f"sites_{args.resolution}.xml"
     else:
         outname = args.outfile
         if ("LR" not in outname) and ("HR" not in outname) and ("MR" not in outname):
@@ -165,8 +165,8 @@ def main():
             else:
                 outname = outname + "_" + args.resolution + ".xml"
 
-    print(f"Soil resolution: {args.resolution} [{resStr}]")
-    print(f"Outfile name:    {outname}")
+    log.info(f"Soil resolution: {args.resolution} [{resStr}]")
+    log.info(f"Outfile name:    {outname}")
 
     # get cell mask from soil/ admin intersect
     dss = xr.open_dataset(SOIL).sel(lev=1)["PROP1"]
@@ -344,12 +344,12 @@ def main():
         if eu28 == True:
             UNC += Dextracountries.values()
 
-        print("\n----------------------------------")
-        print("SELECTION")
+        log.info("----------------------------------")
+        log.info("Selection")
         if len(selPrint1) > 0:
-            print("Region  : ", "; ".join(selPrint1))
+            log.info(f"Region  : {';'.join(selPrint1)}")
         if len(selPrint2) > 0:
-            print("Country : ", "; ".join(selPrint2))
+            log.info(f"Country : {';'.join(selPrint2)}")
 
     def createMask(nc, vals, mask=None):
         da = nc.values
@@ -394,17 +394,17 @@ def main():
         if world:
             mask = np.where(ds.UN.values > 0, 1, 0)
 
-    print("\nNumber of sites/ cells:")
-    print(" region mask:", int(np.sum(mask)))
+    log.info("Number of sites/ cells:")
+    log.info(f" region mask: {int(np.sum(mask))}")
     mask *= soilmask
-    print(" + soil mask:", int(np.sum(mask)))
-    print("----------------------------------\n")
+    log.info(f" + soil mask: {int(np.sum(mask))}")
+    log.info("----------------------------------")
 
     ids = np.zeros_like(mask)
 
     if world and args.resolution == "HR":
-        print("\nWARNING  You selected the entire world in high-res as a domain.")
-        print("         This will take a loooooooooong time.\n")
+        log.warn("\nWARNING  You selected the entire world in high-res as a domain.")
+        log.warn("         This will take a loooooooooong time.\n")
         x = raw_input("[p] to proceed, anything else to abort")
 
         if string.lower(x) == "p":
@@ -544,7 +544,7 @@ def main():
 
     # write XML file
     # merge site chunks into common site file
-    print("\nWriting site XML file")
+    log.info("Writing site XML file")
 
     xml = ET.Element("ldndcsite")
     for scnt, site in enumerate(sites):
@@ -558,7 +558,7 @@ def main():
     open(outname, "w").write(strOut)
 
     if log.level == logging.DEBUG:
-        print("Writing netCDF file of selected regions:", outname[:-4] + ".nc")
+        log.info(f"Writing netCDF file of selected regions:{outname[:-4]}.nc")
         dout = xr.Dataset()
 
         # mask A
