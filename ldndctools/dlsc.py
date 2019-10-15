@@ -34,16 +34,14 @@ log.setLevel("DEBUG")
 
 NODATA = "-99.99"
 
-DATA = Path("data")
+DPATH = Path("data")
 
 
 def translateDataFormat(d):
     """ translate data from nc soil file (pointwise xarray sel) to new naming and units """
     data = []
-    size = len(d.lev)  # number of layers (5)
-
     ks = nmap.keys()
-    for l in range(size):
+    for l in range(len(d.lev)):
         od = {}
         for k in ks:
             name, conv, ignore = nmap[k]
@@ -74,9 +72,6 @@ cmap["wcmax"] = 1
 cmap["iron"] = 5
 
 
-# --------------------------- END
-
-
 def print_table(seq, columns=2, base=0):
     """ print input selection table """
     table = ""
@@ -97,9 +92,7 @@ def print_table(seq, columns=2, base=0):
             la = i * len(labels) + j + base
             if labels[j, i] != "":
                 vals.append(labels[j, i])
-
                 labels[j, i] = "[%d] " % la + labels[j, i]
-
                 keys.append(la)
 
     t = []
@@ -149,8 +142,8 @@ def main():
     dres = dict(LR="0.5x0.5deg", MR="0.25x0.25deg", HR="0.0833x0.0833deg")
 
     if args.resolution in ["LR", "MR", "HR"]:
-        SOIL = DATA / "soil" / f"GLOBAL_WISESOIL_S1_{args.resolution}.nc"
-        ADMIN = DATA / "tmworld" / f"tmworld_{args.resolution}.nc"
+        SOIL = DPATH / "soil" / f"GLOBAL_WISESOIL_S1_{args.resolution}.nc"
+        ADMIN = DPATH / "tmworld" / f"tmworld_{args.resolution}.nc"
         resStr = dres[args.resolution]
     else:
         log.error(f"Wrong resolution: {args.resolution}. Use HR, MR or LR.")
@@ -174,7 +167,7 @@ def main():
     soilmask = np.ma.where(dss.to_masked_array() > 0, 1, 0)
 
     # countries
-    df = pd.read_csv(DATA / "tmworld" / "tmworld_full_lut.txt", sep="\t")
+    df = pd.read_csv(DPATH / "tmworld" / "tmworld_full_lut.txt", sep="\t")
 
     # eu28 specific
     eu28 = "BE,DE,FR,IT,LU,NL,DK,IE,GB,GR,PT,ES,FI,AT,SE,EE,LV,LT,MT,PL,SK,SI,CZ,HU,CY,BG,RO,HR".split(
@@ -189,11 +182,11 @@ def main():
     Dcountries = dict(zip(df.NAME, df.UN))
 
     # regions
-    dfr = pd.read_csv(DATA / "tmworld" / "tmworld_regions_lut.txt", sep="\t")
+    dfr = pd.read_csv(DPATH / "tmworld" / "tmworld_regions_lut.txt", sep="\t")
     Dregions = dict(zip(dfr.R_Name, dfr.R_Code))
 
     # subregions
-    dfsr = pd.read_csv(DATA / "tmworld" / "tmworld_subregions_lut.txt", sep="\t")
+    dfsr = pd.read_csv(DPATH / "tmworld" / "tmworld_subregions_lut.txt", sep="\t")
     Dsubregions = dict(zip(dfsr.SR_Name, dfsr.SR_Code))
 
     # lists with selection ids for tmworld netcdfs
@@ -448,9 +441,12 @@ def main():
     # punch out soil id coordinate (by segment of 200 cells max. each for speed reasons)
     CHUCK = 200
 
-    Lcids2d = [Lcids[i : i + CHUCK] for i in range(0, len(Lcids), CHUCK)]
-    Lix2d = [Lix[i : i + CHUCK] for i in range(0, len(Lix), CHUCK)]
-    Ljx2d = [Ljx[i : i + CHUCK] for i in range(0, len(Ljx), CHUCK)]
+    def create_chunks(l):
+        return [l[i : i + CHUCK] for i in range(0, len(l), CHUCK)]
+
+    Lcids2d = create_chunks(Lcids)
+    Lix2d = create_chunks(Lix)
+    Ljx2d = create_chunks(Ljx)
 
     sites = []
     sbCnt = 1
