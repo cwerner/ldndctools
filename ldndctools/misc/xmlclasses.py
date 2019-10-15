@@ -18,7 +18,7 @@ class BaseXML(object):
         for t in "AUTHOR,EMAIL,DATE,DATASET,VERSION,SOURCE".split(","):
             if t in kwargs:
                 e = ET.SubElement(desc, t.lower())
-                e.text = t
+                e.text = str(kwargs[t])
         self.tags["desc"] = desc
 
     def write(self, ID=None, filename="all.xml"):

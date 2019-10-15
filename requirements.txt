@@ -1,6 +1,7 @@
 netCDF4
 numpy
 pandas
+pyyaml
 progressbar
 xarray==0.12.3
 
