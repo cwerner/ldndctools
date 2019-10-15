@@ -187,64 +187,53 @@ Help:
         help="subdivide the first soil layer (rice sims)",
     )
 
-    (options, args) = parser.parse_args()
+    (opts, args) = parser.parse_args()
 
-    print(
-        "____________________________________________________________________________"
-    )
-    print()
-    print(
-        f"        [D]ynamic [L]andscapeDNDC [S]itefile [C]reator (DLSC {__version__})"
-    )
-    print()
-    print("              ... use this tool to build XML LDNDC site files")
-    print(
-        "____________________________________________________________________________"
-    )
-    print("2019/10/13, christian.werner@kit.edu")
-    print()
+    banner = f"""_______________________________________________________________________
+[D]ynamic [L]andscapeDNDC [S]itefile [C]reator (DLSC {__version__})
+         ... use this tool to build XML LDNDC site files")
+_______________________________________________________________________
+2019/10/13, christian.werner@kit.edu
 
-    # delete later
+"""
+    print(banner)
+
     DEBUG = True
     INTERACTIVE = True
 
-    if (
-        (options.rcode is not None)
-        or (options.ccode is not None)
-        or (options.file is not None)
-    ):
+    if (opts.rcode is not None) or (opts.ccode is not None) or (opts.file is not None):
         print("Non-interactive mode...")
         INTERACTIVE = False
 
     # query environment or command flags for selection (non-intractive mode)
-    options.rcode = os.environ.get("DLSC_REGION", options.rcode)
-    options.ccode = os.environ.get("DLSC_COUNTRY", options.ccode)
+    opts.rcode = os.environ.get("DLSC_REGION", opts.rcode)
+    opts.ccode = os.environ.get("DLSC_COUNTRY", opts.ccode)
 
     # single country selection
-    if (options.rcode is None) and (options.ccode is not None):
-        options.rcode = "c"
+    if (opts.rcode is None) and (opts.ccode is not None):
+        opts.rcode = "c"
 
     dres = dict(LR="0.5x0.5deg", MR="0.25x0.25deg", HR="0.0833x0.0833deg")
 
-    if options.resolution in ["LR", "MR", "HR"]:
-        SOIL = f"data/soil/GLOBAL_WISESOIL_S1_{options.resolution}.nc"
-        ADMIN = f"data/tmworld/tmworld_{options.resolution}.nc"
-        resStr = dres[options.resolution]
+    if opts.resolution in ["LR", "MR", "HR"]:
+        SOIL = f"data/soil/GLOBAL_WISESOIL_S1_{opts.resolution}.nc"
+        ADMIN = f"data/tmworld/tmworld_{opts.resolution}.nc"
+        resStr = dres[opts.resolution]
     else:
-        print(f"Wrong resolution: {options.resolution}. Use HR, MR or LR.")
+        print(f"Wrong resolution: {opts.resolution}. Use HR, MR or LR.")
         exit(-1)
 
     if len(args) == 0:
-        outname = "sites_%s.xml" % options.resolution
+        outname = "sites_%s.xml" % opts.resolution
     else:
         outname = args[0]
         if ("LR" not in outname) and ("HR" not in outname) and ("MR" not in outname):
             if outname[-4:] == ".xml":
-                outname = outname[:-4] + "_" + options.resolution + ".xml"
+                outname = outname[:-4] + "_" + opts.resolution + ".xml"
             else:
-                outname = outname + "_" + options.resolution + ".xml"
+                outname = outname + "_" + opts.resolution + ".xml"
 
-    print("Soil resolution: %s [%s]" % (options.resolution, resStr))
+    print("Soil resolution: %s [%s]" % (opts.resolution, resStr))
     print("Outfile name:   ", outname)
 
     # get cell mask from soil/ admin intersect
@@ -283,10 +272,10 @@ Help:
     eu28 = False
     world = False
 
-    if options.rcode:
-        UNR.append(options.rcode)
-    if options.ccode:
-        UNC.append(options.ccode)
+    if opts.rcode:
+        UNR.append(opts.rcode)
+    if opts.ccode:
+        UNC.append(opts.ccode)
 
     if INTERACTIVE:
 
@@ -319,10 +308,10 @@ Help:
         # (sub-)region selection section
         while repeat:
             # query if not set programatically
-            if options.rcode in [None]:
+            if opts.rcode in [None]:
                 x = input("Select (sub-)region (multiple: +; c: add countries): ")
             else:
-                x = options.rcode
+                x = opts.rcode
 
             if x == "":
                 showCountries = True
@@ -394,10 +383,10 @@ Help:
 
             while repeat:
                 # query if not set programatically
-                if options.ccode is None:
+                if opts.ccode is None:
                     x = input("Select country (multiple: +): ")
                 else:
-                    x = options.ccode
+                    x = opts.ccode
 
                 items = x.split("+") if "+" in x else [x]
 
@@ -458,8 +447,8 @@ Help:
         mask = np.zeros_like(ds.UN.values)
 
         # use coords from file
-        if options.file:
-            mask = createMask_fromfile(ds.UN, options.file)
+        if opts.file:
+            mask = createMask_fromfile(ds.UN, opts.file)
 
         # populate mask (incrementally)
         if len(UNR) > 0:
@@ -481,7 +470,7 @@ Help:
 
     ids = np.zeros_like(mask)
 
-    if world and options.resolution == "HR":
+    if world and opts.resolution == "HR":
         print("\nWARNING  You selected the entire world in high-res as a domain.")
         print("         This will take a loooooooooong time.\n")
         x = raw_input("[p] to proceed, anything else to abort")
@@ -505,7 +494,7 @@ Help:
     # if LR: 1000
     # if MR/HR: 10000
 
-    if options.resolution in ["HR", "MR"]:
+    if opts.resolution in ["HR", "MR"]:
         M = 10000
     else:
         M = 1000
@@ -600,12 +589,12 @@ Help:
                     data2[l].pop("topd")
                     data2[l].pop("botd")
 
-                    if l == 0 and options.extrasplit:
+                    if l == 0 and opts.extrasplit:
                         site.addSoilLayer(
                             data2[l],
                             litter=False,
                             accuracy=cmap,
-                            extra_split=options.extrasplit,
+                            extra_split=opts.extrasplit,
                         )
                     else:
                         site.addSoilLayer(data2[l], litter=False, accuracy=cmap)
@@ -646,11 +635,10 @@ Help:
         dout["selmask"] = da
 
         # clip to bbox
-        if options.bbox:
-            print(f"BBox: {options.bbox}")
+        if opts.bbox:
+            print(f"BBox: {opts.bbox}")
             lon1, lat1, lon2, lat2 = (
-                float(x)
-                for x in options.bbox.replace("[", "").replace("]", "").split(",")
+                float(x) for x in opts.bbox.replace("[", "").replace("]", "").split(",")
             )
             lat1, lat2 = (lat1, lat2) if lat1 < lat2 else (lat2, lat1)
             lon1, lon2 = (lon1, lon2) if lon1 < lon2 else (lon2, lon1)
