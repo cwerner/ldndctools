@@ -470,8 +470,8 @@ def main():
     ).start()
 
     # regional subset first to savetime
-    min_lat, max_lat = ds["lat"].isel(lat=min(Ljx)), ds["lat"].isel(lat=max(Ljx))
-    min_lon, max_lon = ds["lon"].isel(lon=min(Lix)), ds["lon"].isel(lon=max(Lix))
+    min_lat, max_lat = ds.lat.isel(lat=min(Ljx)), ds.lat.isel(lat=max(Ljx))
+    min_lon, max_lon = ds.lon.isel(lon=min(Lix)), ds.lon.isel(lon=max(Lix))
     min_dlat, min_dlon = min(Ljx), min(Lix)
 
     ds_ = ds.sel(lat=slice(min_lat, max_lat), lon=slice(min_lon, max_lon))
