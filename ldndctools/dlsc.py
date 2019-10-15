@@ -477,7 +477,11 @@ def main():
 
     for Lix, Ljx, Lcids in zip(Lix2d, Ljx2d, Lcids2d):
         log.debug(f"processing site batch {sbCnt} of {len(Lcids2d)}")
-        dx = ds_.isel_points(lat=np.array(Ljx) - min_dlat, lon=np.array(Lix) - min_dlon)
+
+        dx = ds_.isel(
+            lat=xr.DataArray(np.array(Ljx) - min_dlat, dims="points"),
+            lon=xr.DataArray(np.array(Lix) - min_dlon, dims="points"),
+        )
 
         for dp in dx.points:
             d = dx.sel(points=dp)
