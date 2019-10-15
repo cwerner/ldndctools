@@ -188,13 +188,10 @@ def main():
     Dsubregions = dict(zip(dfsr.SR_Name, dfsr.SR_Code))
 
     # lists with selection ids for tmworld netcdfs
-    UNR = []
-    UNSR = []
-    UNC = []
+    UNR, UNSR, UNC = [], [], []
 
     # special flags (TODO: cleanup later)
-    eu28 = False
-    world = False
+    eu28, world = False, False
 
     if args.rcode:
         UNR.append(args.rcode)
@@ -269,8 +266,7 @@ def main():
                         print("Invalid Entry")
 
         # create human-readable selection lists
-        selPrint1 = []
-        selPrint2 = []
+        selPrint1, selPrint2 = [], []
         for I in valItems:
             if I < len(seq1):
                 reg = seq1[I]
@@ -396,9 +392,7 @@ def main():
         log.warn("         This will take a loooooooooong time.\n")
         x = raw_input("[p] to proceed, anything else to abort")
 
-        if string.lower(x) == "p":
-            pass
-        else:
+        if string.lower(x) != "p":
             exit(1)
 
     # MAIN LOOP
@@ -418,7 +412,6 @@ def main():
             if mask[j, i] == 1:
                 cid = ((len(mask) - 1) - j) * M + i if LATS[0] < LATS[-1] else j * M + i
                 ids[j, i] = cid
-
                 Lcids.append(cid)
                 Lix.append(i)
                 Ljx.append(j)
