@@ -469,30 +469,20 @@ def main():
     ).start()
 
     # regional subset first to savetime
-    min_lat = ds["lat"].isel(lat=min(Ljx))
-    max_lat = ds["lat"].isel(lat=max(Ljx))
-
-    min_dlat = min(Ljx)
-    min_dlon = min(Lix)
-
-    min_lon = ds["lon"].isel(lon=min(Lix))
-    max_lon = ds["lon"].isel(lon=max(Lix))
+    min_lat, max_lat = ds["lat"].isel(lat=min(Ljx)), ds["lat"].isel(lat=max(Ljx))
+    min_lon, max_lon = ds["lon"].isel(lat=min(Lix)), ds["lon"].isel(lat=max(Lix))
+    min_dlat, min_dlon = min(Ljx), min(Lix)
 
     ds_ = ds.sel(lat=slice(min_lat, max_lat), lon=slice(min_lon, max_lon))
 
     for Lix, Ljx, Lcids in zip(Lix2d, Ljx2d, Lcids2d):
-        # print "processing site batch %d of %d" % (sbCnt, len(Lcids2d))
+        log.debug(f"processing site batch {sbCnt} of {len(Lcids2d)}")
         dx = ds_.isel_points(lat=np.array(Ljx) - min_dlat, lon=np.array(Lix) - min_dlon)
 
         for dp in dx.points:
             d = dx.sel(points=dp)
-
-            site = SiteXML(
-                lat=float(d.lat),
-                lon=float(d.lon),
-                id=Dcids[(float(d.lat), float(d.lon))],
-                **BASEINFO,
-            )  # id=Lcids[int(dp)] )
+            _lat, _lon = float(d.lat), float(d.lon)
+            site = SiteXML(lat=_lat, lon=_lon, id=Dcids[(_lat, _lon)], **BASEINFO)
 
             # take point selection and return dict with modified data naming and units
             data2 = translateDataFormat(d)
@@ -504,32 +494,32 @@ def main():
                 addFlag = True
 
             # 5 layers !!!
-            for l in range(5):
-                if data2[l]["topd"] >= 0.0:
-                    data2[l]["depth"] = (data2[l]["botd"] - data2[l]["topd"]) * 10
-                    if l in [0, 1]:
+            for lay in range(5):
+                if data2[lay]["topd"] >= 0.0:
+                    data2[lay]["depth"] = (data2[lay]["botd"] - data2[lay]["topd"]) * 10
+                    if lay in [0, 1]:
                         split = 10
-                    elif l in [2, 3]:
+                    elif lay in [2, 3]:
                         split = 4
                     else:
                         split = 2
-                    data2[l]["split"] = split
+                    data2[lay]["split"] = split
 
                     # default iron percentage
-                    data2[l]["iron"] = 0.01
+                    data2[lay]["iron"] = 0.01
 
-                    data2[l].pop("topd")
-                    data2[l].pop("botd")
+                    data2[lay].pop("topd")
+                    data2[lay].pop("botd")
 
-                    if l == 0 and args.extrasplit:
+                    if lay == 0 and args.extrasplit:
                         site.addSoilLayer(
-                            data2[l],
+                            data2[lay],
                             litter=False,
                             accuracy=cmap,
                             extra_split=args.extrasplit,
                         )
                     else:
-                        site.addSoilLayer(data2[l], litter=False, accuracy=cmap)
+                        site.addSoilLayer(data2[lay], litter=False, accuracy=cmap)
 
             if addFlag == True:
                 sites.append(site)
