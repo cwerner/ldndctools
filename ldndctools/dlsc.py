@@ -16,7 +16,8 @@ import xarray as xr
 import numpy as np
 import pandas as pd
 import logging
-import os, datetime, shutil, string, math, progressbar
+import os, datetime, shutil, string, math
+import progressbar as pb
 from pathlib import Path
 import xml.dom.minidom as MD
 import xml.etree.cElementTree as ET
@@ -456,15 +457,15 @@ def main():
 
     cnt = 0
 
-    bar = progressbar.ProgressBar(
+    bar = pb.ProgressBar(
         maxval=len(Lcids),
         term_width=80,
         widgets=[
-            progressbar.Bar("=", " %s [" % "Status: extracting sites", "]"),
+            pb.Bar("=", " %s [" % "Status: extracting sites", "]"),
             " ",
-            progressbar.SimpleProgress(),
+            pb.SimpleProgress(),
             " ",
-            progressbar.Percentage(),
+            pb.Percentage(),
         ],
     ).start()
 
