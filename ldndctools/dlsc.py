@@ -328,11 +328,7 @@ Help:
                 showCountries = True
                 break
 
-            if "+" in x:
-                items = x.split("+")
-            else:
-                items = [x]
-
+            items = x.split("+") if "+" in x else [x]
             print(items)
 
             # validate items
@@ -354,10 +350,7 @@ Help:
                             else:
                                 valItems.append(I)
                         else:
-                            print(
-                                "Invalid Entry (0...%d) %d"
-                                % (len(seq1) + len(seq2) - 1, I)
-                            )
+                            print(f"Invalid Entry (0...{len(seq1)+len(seq2)-1}) {I}")
 
                     except ValueError:
                         print("Invalid Entry")
@@ -406,10 +399,7 @@ Help:
                 else:
                     x = options.ccode
 
-                if "+" in x:
-                    items = x.split("+")
-                else:
-                    items = [x]
+                items = x.split("+") if "+" in x else [x]
 
                 # validate items
                 valItems = []
@@ -525,11 +515,7 @@ Help:
     for j in range(len(mask)):
         for i in range(len(mask[0])):
             if mask[j, i] == 1:
-                if LATS[0] < LATS[-1]:
-                    cid = ((len(mask) - 1) - j) * M + i
-                else:
-                    cid = j * M + i
-
+                cid = ((len(mask) - 1) - j) * M + i if LATS[0] < LATS[-1] else j * M + i
                 ids[j, i] = cid
 
                 Lcids.append(cid)
