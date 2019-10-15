@@ -17,6 +17,7 @@ import numpy as np
 import pandas as pd
 import os, datetime, shutil, string, math, progressbar
 from optparse import OptionParser
+from pathlib import Path
 import xml.dom.minidom as MD
 import xml.etree.cElementTree as ET
 
@@ -46,6 +47,8 @@ BASEINFO = dict(
 )
 
 NODATA = "-99.99"
+
+DATA = Path("data")
 
 
 def translateDataFormat(d):
@@ -189,10 +192,11 @@ Help:
 
     (opts, args) = parser.parse_args()
 
-    banner = f"""_______________________________________________________________________
-[D]ynamic [L]andscapeDNDC [S]itefile [C]reator (DLSC {__version__})
+    banner = f"""________________________________________________________________________
+
+ [D]ynamic [L]andscapeDNDC [S]itefile [C]reator (DLSC {__version__})
          ... use this tool to build XML LDNDC site files")
-_______________________________________________________________________
+________________________________________________________________________
 2019/10/13, christian.werner@kit.edu
 
 """
@@ -216,8 +220,8 @@ _______________________________________________________________________
     dres = dict(LR="0.5x0.5deg", MR="0.25x0.25deg", HR="0.0833x0.0833deg")
 
     if opts.resolution in ["LR", "MR", "HR"]:
-        SOIL = f"data/soil/GLOBAL_WISESOIL_S1_{opts.resolution}.nc"
-        ADMIN = f"data/tmworld/tmworld_{opts.resolution}.nc"
+        SOIL = DATA / "soil" / f"GLOBAL_WISESOIL_S1_{opts.resolution}.nc"
+        ADMIN = DATA / "tmworld" / f"tmworld_{opts.resolution}.nc"
         resStr = dres[opts.resolution]
     else:
         print(f"Wrong resolution: {opts.resolution}. Use HR, MR or LR.")
@@ -233,15 +237,15 @@ _______________________________________________________________________
             else:
                 outname = outname + "_" + opts.resolution + ".xml"
 
-    print("Soil resolution: %s [%s]" % (opts.resolution, resStr))
-    print("Outfile name:   ", outname)
+    print(f"Soil resolution: {opts.resolution} [{resStr}]")
+    print(f"Outfile name:    {outname}")
 
     # get cell mask from soil/ admin intersect
     dss = xr.open_dataset(SOIL).sel(lev=1)["PROP1"]
     soilmask = np.ma.where(dss.to_masked_array() > 0, 1, 0)
 
     # countries
-    df = pd.read_csv("data/tmworld/tmworld_full_lut.txt", sep="\t")
+    df = pd.read_csv(DATA / "tmworld" / "tmworld_full_lut.txt", sep="\t")
 
     # eu28 specific
     eu28 = "BE,DE,FR,IT,LU,NL,DK,IE,GB,GR,PT,ES,FI,AT,SE,EE,LV,LT,MT,PL,SK,SI,CZ,HU,CY,BG,RO,HR".split(
@@ -256,11 +260,11 @@ _______________________________________________________________________
     Dcountries = dict(zip(df.NAME, df.UN))
 
     # regions
-    dfr = pd.read_csv("data/tmworld/tmworld_regions_lut.txt", sep="\t")
+    dfr = pd.read_csv(DATA / "tmworld" / "tmworld_regions_lut.txt", sep="\t")
     Dregions = dict(zip(dfr.R_Name, dfr.R_Code))
 
     # subregions
-    dfsr = pd.read_csv("data/tmworld/tmworld_subregions_lut.txt", sep="\t")
+    dfsr = pd.read_csv(DATA / "tmworld" / "tmworld_subregions_lut.txt", sep="\t")
     Dsubregions = dict(zip(dfsr.SR_Name, dfsr.SR_Code))
 
     # lists with selection ids for tmworld netcdfs
