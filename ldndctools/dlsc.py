@@ -15,36 +15,21 @@
 import xarray as xr
 import numpy as np
 import pandas as pd
+import logging
 import os, datetime, shutil, string, math, progressbar
-from optparse import OptionParser
 from pathlib import Path
 import xml.dom.minidom as MD
 import xml.etree.cElementTree as ET
 
 from ldndctools import __version__
 
-from ldndctools.misc.xmlclasses import SiteXML
+from .cli import cli
+from .extra import get_config, set_config
+from .misc.xmlclasses import SiteXML
 
-# ---------------------------------------------------------------------
-#  Default info for this dataset
-# ---------------------------------------------------------------------
-AUTHOR = "Christian Werner"
-EMAIL = "christian.werner@kit.edu"
-DATE = str(datetime.datetime.now())
-DATASET = (
-    f"created using [D]ynamic [L]andscapeDNDC [S]itefile [C]reator ({__version__})"
-)
-VERSION = __version__
-SOURCE = "IMK-IFU, KIT"
+log = logging.getLogger(__name__)
 
-BASEINFO = dict(
-    AUTHOR=AUTHOR,
-    EMAIL=EMAIL,
-    DATE=DATE,
-    DATASET=DATASET,
-    VERSION=VERSION,
-    SOURCE=SOURCE,
-)
+log.setLevel("DEBUG")
 
 NODATA = "-99.99"
 
@@ -123,121 +108,64 @@ def print_table(seq, columns=2, base=0):
     print("\n".join(t) + "\n")
 
 
-# -----------------------------------------------------------
-
-
-class MyParser(OptionParser):
-    def format_epilog(self, formatter):
-        return self.epilog
-
-
 def main():
-    parser = MyParser(
-        "usage: %prog [options] outfile",
-        epilog="""
+    # parse args
+    args = cli()
 
-Example usage:
-dlsc -r LR sites_EU28.xml
+    # read config
+    cfg = get_config(args.config)
 
-Help:
--h, --help
-""",
+    # write config
+    if args.storeconfig:
+        set_config(cfg)
+
+    def _get_cfg_item(group, item, save="na"):
+        return cfg[group].get(item, save)
+
+    BASEINFO = dict(
+        AUTHOR=_get_cfg_item("info", "author"),
+        EMAIL=_get_cfg_item("info", "email"),
+        DATE=str(datetime.datetime.now()),
+        DATASET=_get_cfg_item("project", "dataset"),
+        VERSION=_get_cfg_item("project", "version", save="0.1"),
+        SOURCE=_get_cfg_item("project", "source"),
     )
-
-    parser.add_option(
-        "-b",
-        "--bbox",
-        dest="bbox",
-        default=None,
-        help="bbox for netCDF output [x1,y1,x2,y2]",
-    )
-
-    parser.add_option(
-        "-f",
-        "--file",
-        dest="file",
-        default=None,
-        help="infile with lat lon coordinates",
-    )
-
-    parser.add_option(
-        "-r",
-        "--res",
-        dest="resolution",
-        default="HR",
-        help="select resolution: HR (0.083deg), MR (0.25deg) or LR (0.5deg)",
-    )
-
-    parser.add_option(
-        "--region",
-        dest="rcode",
-        default=None,
-        help="for non-interactive execution provide region code(s) [chain with +]",
-    )
-
-    parser.add_option(
-        "--country",
-        dest="ccode",
-        default=None,
-        help="for non-interactive execution provide country code(s) [chain with +]",
-    )
-
-    parser.add_option(
-        "--extra-split",
-        action="store_true",
-        dest="extrasplit",
-        default=False,
-        help="subdivide the first soil layer (rice sims)",
-    )
-
-    (opts, args) = parser.parse_args()
-
-    banner = f"""________________________________________________________________________
-
- [D]ynamic [L]andscapeDNDC [S]itefile [C]reator (DLSC {__version__})
-         ... use this tool to build XML LDNDC site files")
-________________________________________________________________________
-2019/10/13, christian.werner@kit.edu
-
-"""
-    print(banner)
-
-    DEBUG = True
+    print(BASEINFO)
     INTERACTIVE = True
 
-    if (opts.rcode is not None) or (opts.ccode is not None) or (opts.file is not None):
+    if (args.rcode is not None) or (args.ccode is not None) or (args.file is not None):
         print("Non-interactive mode...")
         INTERACTIVE = False
 
     # query environment or command flags for selection (non-intractive mode)
-    opts.rcode = os.environ.get("DLSC_REGION", opts.rcode)
-    opts.ccode = os.environ.get("DLSC_COUNTRY", opts.ccode)
+    args.rcode = os.environ.get("DLSC_REGION", args.rcode)
+    args.ccode = os.environ.get("DLSC_COUNTRY", args.ccode)
 
     # single country selection
-    if (opts.rcode is None) and (opts.ccode is not None):
-        opts.rcode = "c"
+    if (args.rcode is None) and (args.ccode is not None):
+        args.rcode = "c"
 
     dres = dict(LR="0.5x0.5deg", MR="0.25x0.25deg", HR="0.0833x0.0833deg")
 
-    if opts.resolution in ["LR", "MR", "HR"]:
-        SOIL = DATA / "soil" / f"GLOBAL_WISESOIL_S1_{opts.resolution}.nc"
-        ADMIN = DATA / "tmworld" / f"tmworld_{opts.resolution}.nc"
-        resStr = dres[opts.resolution]
+    if args.resolution in ["LR", "MR", "HR"]:
+        SOIL = DATA / "soil" / f"GLOBAL_WISESOIL_S1_{args.resolution}.nc"
+        ADMIN = DATA / "tmworld" / f"tmworld_{args.resolution}.nc"
+        resStr = dres[args.resolution]
     else:
-        print(f"Wrong resolution: {opts.resolution}. Use HR, MR or LR.")
+        print(f"Wrong resolution: {args.resolution}. Use HR, MR or LR.")
         exit(-1)
 
-    if len(args) == 0:
-        outname = "sites_%s.xml" % opts.resolution
+    if not args.outfile:
+        outname = "sites_%s.xml" % args.resolution
     else:
-        outname = args[0]
+        outname = args.outfile
         if ("LR" not in outname) and ("HR" not in outname) and ("MR" not in outname):
             if outname[-4:] == ".xml":
-                outname = outname[:-4] + "_" + opts.resolution + ".xml"
+                outname = outname[:-4] + "_" + args.resolution + ".xml"
             else:
-                outname = outname + "_" + opts.resolution + ".xml"
+                outname = outname + "_" + args.resolution + ".xml"
 
-    print(f"Soil resolution: {opts.resolution} [{resStr}]")
+    print(f"Soil resolution: {args.resolution} [{resStr}]")
     print(f"Outfile name:    {outname}")
 
     # get cell mask from soil/ admin intersect
@@ -276,10 +204,10 @@ ________________________________________________________________________
     eu28 = False
     world = False
 
-    if opts.rcode:
-        UNR.append(opts.rcode)
-    if opts.ccode:
-        UNC.append(opts.ccode)
+    if args.rcode:
+        UNR.append(args.rcode)
+    if args.ccode:
+        UNC.append(args.ccode)
 
     if INTERACTIVE:
 
@@ -312,10 +240,10 @@ ________________________________________________________________________
         # (sub-)region selection section
         while repeat:
             # query if not set programatically
-            if opts.rcode in [None]:
+            if args.rcode in [None]:
                 x = input("Select (sub-)region (multiple: +; c: add countries): ")
             else:
-                x = opts.rcode
+                x = args.rcode
 
             if x == "":
                 showCountries = True
@@ -387,10 +315,10 @@ ________________________________________________________________________
 
             while repeat:
                 # query if not set programatically
-                if opts.ccode is None:
+                if args.ccode is None:
                     x = input("Select country (multiple: +): ")
                 else:
-                    x = opts.ccode
+                    x = args.ccode
 
                 items = x.split("+") if "+" in x else [x]
 
@@ -451,8 +379,8 @@ ________________________________________________________________________
         mask = np.zeros_like(ds.UN.values)
 
         # use coords from file
-        if opts.file:
-            mask = createMask_fromfile(ds.UN, opts.file)
+        if args.file:
+            mask = createMask_fromfile(ds.UN, args.file)
 
         # populate mask (incrementally)
         if len(UNR) > 0:
@@ -474,7 +402,7 @@ ________________________________________________________________________
 
     ids = np.zeros_like(mask)
 
-    if world and opts.resolution == "HR":
+    if world and args.resolution == "HR":
         print("\nWARNING  You selected the entire world in high-res as a domain.")
         print("         This will take a loooooooooong time.\n")
         x = raw_input("[p] to proceed, anything else to abort")
@@ -498,7 +426,7 @@ ________________________________________________________________________
     # if LR: 1000
     # if MR/HR: 10000
 
-    if opts.resolution in ["HR", "MR"]:
+    if args.resolution in ["HR", "MR"]:
         M = 10000
     else:
         M = 1000
@@ -593,12 +521,12 @@ ________________________________________________________________________
                     data2[l].pop("topd")
                     data2[l].pop("botd")
 
-                    if l == 0 and opts.extrasplit:
+                    if l == 0 and args.extrasplit:
                         site.addSoilLayer(
                             data2[l],
                             litter=False,
                             accuracy=cmap,
-                            extra_split=opts.extrasplit,
+                            extra_split=args.extrasplit,
                         )
                     else:
                         site.addSoilLayer(data2[l], litter=False, accuracy=cmap)
@@ -629,7 +557,7 @@ ________________________________________________________________________
     strOut = MD.parseString(ET.tostring(xml)).toprettyxml()
     open(outname, "w").write(strOut)
 
-    if DEBUG:
+    if log.level == logging.DEBUG:
         print("Writing netCDF file of selected regions:", outname[:-4] + ".nc")
         dout = xr.Dataset()
 
@@ -639,10 +567,10 @@ ________________________________________________________________________
         dout["selmask"] = da
 
         # clip to bbox
-        if opts.bbox:
-            print(f"BBox: {opts.bbox}")
+        if args.bbox:
+            print(f"BBox: {args.bbox}")
             lon1, lat1, lon2, lat2 = (
-                float(x) for x in opts.bbox.replace("[", "").replace("]", "").split(",")
+                float(x) for x in args.bbox.replace("[", "").replace("]", "").split(",")
             )
             lat1, lat2 = (lat1, lat2) if lat1 < lat2 else (lat2, lat1)
             lon1, lon2 = (lon1, lon2) if lon1 < lon2 else (lon2, lon1)
