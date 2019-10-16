@@ -153,9 +153,9 @@ def main():
         outname = args.outfile
         if ("LR" not in outname) and ("HR" not in outname) and ("MR" not in outname):
             if outname.endswith(".xml"):
-                outname = outname[:-4] + "_" + args.resolution + ".xml"
+                outname = f"{outname[:-4]}_{args.resolution}.xml"
             else:
-                outname = outname + "_" + args.resolution + ".xml"
+                outname = f"{outname}_{args.resolution}.xml"
 
     log.info(f"Soil resolution: {args.resolution} [{resStr}]")
     log.info(f"Outfile name:    {outname}")
@@ -200,8 +200,8 @@ def main():
 
     if INTERACTIVE:
 
-        print("\nPlease make your region/ country selection [use codes]")
-        print('Multiple selections are allowed [i.e. "12+13+17"]\n')
+        print("\nPlease select your region/ country [use codes]:")
+        print('Multiple selections allowed [i.e. "12+13+17"]\n')
         print('If you want to include a specific country type "c" in selection.')
         print('You can also add a country to a region [i.e. "27+c"]')
         print("\nRegions:")
