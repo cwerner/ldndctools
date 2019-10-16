@@ -25,9 +25,7 @@ def _copy_default_config():
 
     # TODO somewhat redundand, merge with set_config code
 
-    fname = resource_filename(
-        Requirement.parse("ldndctools"), "ldndctools/data/ldndctools.conf"
-    )
+    fname = resource_filename(Requirement.parse("ldndctools"), "data/ldndctools.conf")
     shutil.copyfile(fname, os.path.join(os.path.expanduser("~"), "ldndctools.conf"))
 
 

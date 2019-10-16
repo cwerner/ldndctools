@@ -543,6 +543,21 @@ def main():
             lat1, lat2 = (lat1, lat2) if lat1 < lat2 else (lat2, lat1)
             lon1, lon2 = (lon1, lon2) if lon1 < lon2 else (lon2, lon1)
             dout = dout.sel(lat=slice(lat1, lat2), lon=slice(lon1, lon2))
+        else:
+            # find a suitable bbox from mask
+            def find_bbox(mask):
+                rows = np.any(mask, axis=1)
+                cols = np.any(mask, axis=0)
+                rmin, rmax = np.where(rows)[0][[0, -1]]
+                cmin, cmax = np.where(cols)[0][[0, -1]]
+                return rmin, rmax, cmin, cmax
+
+            rmin, rmax, cmin, cmax = find_bbox(mask)
+            log.debug([rmin, rmax, cmin, cmax])
+            log.debug(mask.shape)
+            log.debug(mask.sum())
+            dout = dout.isel(lat=slice(rmin, rmax + 1), lon=slice(cmin, cmax + 1))
+            log.debug(dout)
 
         da2 = xr.DataArray(ids, coords=[("lat", lats), ("lon", lons)], name="ids")
         dout[da2.name] = da2
