@@ -4,5 +4,5 @@ pandas
 pyyaml
 progressbar
 xarray
-
+streamlit
 
