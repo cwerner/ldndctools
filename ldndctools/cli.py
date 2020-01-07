@@ -105,7 +105,20 @@ def cli():
     parser.add_argument("outfile", default=None, nargs="?", help="output xml file")
 
     parser.add_argument(
-        "-b", "--bbox", dest="bbox", default=None, help="limit files by PATTERN"
+        "-b",
+        "--bbox",
+        dest="bbox",
+        default=None,
+        metavar="[X1,Y1,X2,Y2]",
+        help="bounding box for netCDF output",
+    )
+
+    parser.add_argument(
+        "--bboxoff",
+        dest="bboxoff",
+        default=False,
+        action="store_true",
+        help="produce netcdf file without bbox",
     )
 
     parser.add_argument(
@@ -132,8 +145,8 @@ def cli():
         "--file",
         dest="file",
         default=None,
-        metavar="[X1,Y1,X2,Y2]",
-        help="bounding box for netCDF output",
+        metavar="FILE",
+        help="optional location file with lat lon coords",
     )
 
     parser.add_argument(
