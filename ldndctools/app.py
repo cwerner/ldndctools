@@ -11,12 +11,14 @@ from pathlib import Path
 # Download a single file and make its content available as a string.
 @st.cache(show_spinner=False)
 def get_file_content_as_string(path):
-    if Path(path).exists:
+    if Path(path).is_file():
+        st.write(Path(path))
         return open(path).read()
     url = (
-        "https://raw.githubusercontent.com/cwerner/ldndctools/i3_streamlit-ui/ldndctools/md/instructions.md"
+        "https://raw.githubusercontent.com/cwerner/ldndctools/i3_streamlit-ui/ldndctools/md/"
         + path
     )
+    st.write(path)
     response = urllib.request.urlopen(url)
     return response.read().decode("utf-8")
 
