@@ -349,12 +349,18 @@ def main():
         return mask
 
     # file mode: create mask from coordinates
+
+    def find_nearest(a, a0):
+        """find nearest lat or lon value from coord"""
+        return a.flat[np.abs(a - a0).argmin()]
+
     def createMask_fromfile(ds, infile):
         df = pd.read_csv(infile, delim_whitespace=True)
-        x = ds.sel(lat=list(df.lat), lon=list(df.lon), method="nearest")
         ds_x = xr.zeros_like(ds)
         for _, r in df.iterrows():
-            ds_x.loc[dict(lon=r.lon, lat=r.lat, method="nearest")] = 1
+            _lon = find_nearest(ds.lon.values, r.lon)
+            _lat = find_nearest(ds.lat.values, r.lat)
+            ds_x.loc[dict(lon=_lon, lat=_lat)] = 1
         return ds_x.values
 
     with xr.open_dataset(ADMIN) as ds:
