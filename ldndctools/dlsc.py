@@ -64,7 +64,7 @@ nmap = {
     "BotDep": ("botd", 1, 0),
 }
 
-cmap = dict((x[0], x[2]) for x in nmap.values())
+cmap = {x[0]: x[2] for x in nmap.values()}
 cmap["depth"] = 0
 cmap["split"] = 0
 cmap["wcmin"] = 1

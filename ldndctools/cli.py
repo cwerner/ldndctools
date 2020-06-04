@@ -43,9 +43,7 @@ class RangeAction(argparse.Action):
                     _ = int(e)
                 except:
                     return False
-            if int(s[1]) < int(s[0]):
-                return False
-            return True
+            return int(s[1]) >= int(s[0])
 
         if is_valid_year_range(s):
             setattr(namespace, self.dest, range(int(s[0]), int(s[-1]) + 1))
@@ -75,17 +73,16 @@ class CustomFormatter(
 ):
     def _get_help_string(self, action):
         help = action.help
-        if "%(default)" not in action.help:
-            if action.default is not argparse.SUPPRESS:
-                defaulting_nargs = [argparse.OPTIONAL, argparse.ZERO_OR_MORE]
-                if action.option_strings or action.nargs in defaulting_nargs:
-                    if type(action.default) == list:
-                        help += " (default: %d-%d)" % (
-                            action.default[0],
-                            action.default[-1],
-                        )
-                    else:
-                        help += " (default: %(default)s)"
+        if "%(default)" not in help and action.default is not argparse.SUPPRESS:
+            defaulting_nargs = [argparse.OPTIONAL, argparse.ZERO_OR_MORE]
+            if action.option_strings or action.nargs in defaulting_nargs:
+                if type(action.default) == list:
+                    help += " (default: %d-%d)" % (
+                        action.default[0],
+                        action.default[-1],
+                    )
+                else:
+                    help += " (default: %(default)s)"
         return help
 
 
