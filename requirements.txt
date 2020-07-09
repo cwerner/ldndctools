@@ -1,6 +1,8 @@
+geopandas
 netCDF4
 numpy
 pandas
+pick
 pyyaml
 progressbar
 rioxarray
