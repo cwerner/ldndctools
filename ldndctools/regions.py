@@ -183,7 +183,7 @@ class Selector(object):
 
         # extra
         # NOTE: MLT is missing in LR dataset
-        eu27_codes = [
+        eu27 = [
             "AUT",
             "BEL",
             "BGR",
@@ -213,8 +213,8 @@ class Selector(object):
             "SWE",
         ]
 
-        eu28_codes = sorted(eu27_codes + ["GBR"])
-        eu28plus_codes = sorted(eu27_codes + ["GBR", "CHE", "NOR"])
+        eu28 = sorted(eu27 + ["GBR"])
+        eu28p = sorted(eu27 + ["GBR", "CHE", "NOR"])
 
         def get_name(df, country_code):
             try:
@@ -222,15 +222,9 @@ class Selector(object):
             except ValueError:
                 pass
 
-        data["EU27"] = {
-            c: get_name(self._df, c) for c in eu27_codes if c in self._names
-        }
-        data["EU28"] = {
-            c: get_name(self._df, c) for c in eu28_codes if c in self._names
-        }
-        data["EU28PLUS"] = {
-            c: get_name(self._df, c) for c in eu28plus_codes if c in self._names
-        }
+        data["EU27"] = {c: get_name(self._df, c) for c in eu27 if c in self._names}
+        data["EU28"] = {c: get_name(self._df, c) for c in eu28 if c in self._names}
+        data["EU28+"] = {c: get_name(self._df, c) for c in eu28p if c in self._names}
 
         return dict(sorted(data.items()))
 
@@ -242,8 +236,12 @@ class Selector(object):
         }
 
     @property
-    def selected(self):
+    def selection(self):
         return self._selection
+
+    @property
+    def boundingbox(self):
+        return self._bbox
 
     def ask(self):
         self._selection = ask_for_region(self)
@@ -309,4 +307,4 @@ if __name__ == "__main__":
     selector = Selector(df)
     selector.ask()
 
-    print(selector.selected)
+    print(selector.selection)
