@@ -217,14 +217,10 @@ class Selector(object):
         eu28p = sorted(eu27 + ["GBR", "CHE", "NOR"])
 
         def get_name(df, country_code):
-            try:
-                return df.query(f"ADM0_A3=='{country_code}'").ADMIN.values[0]
-            except ValueError:
-                pass
+            return df.query(f"ADM0_A3=='{country_code}'").ADMIN.values[0]
 
-        data["EU27"] = {c: get_name(self._df, c) for c in eu27 if c in self._names}
-        data["EU28"] = {c: get_name(self._df, c) for c in eu28 if c in self._names}
-        data["EU28+"] = {c: get_name(self._df, c) for c in eu28p if c in self._names}
+        for k, source in zip(["EU27", "EU28", "EU28+"], [eu27, eu28, eu28p]):
+            data[k] = {c: get_name(self._df, c) for c in source if c in self._names}
 
         return dict(sorted(data.items()))
 
