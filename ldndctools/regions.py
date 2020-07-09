@@ -5,6 +5,8 @@ from pathlib import Path
 import questionary
 from questionary import form
 from questionary.prompts.common import Choice, Separator
+from questionary import Validator, ValidationError
+
 
 DATA = Path.home() / ".ldndctools" / "data"
 
@@ -55,6 +57,66 @@ def ask_for_resolution(cfg):
     )
 
 
+def remove_brackets(s):
+    s = s.strip()
+    if len(s) > 2:
+        for start_bracket, end_bracket in zip("([{", ")]}"):
+            if (s[0] == start_bracket) and (s[-1] == end_bracket):
+                return s[1:-1]
+    return s
+
+
+class BBoxValidator(Validator):
+    def validate(self, document):
+        ok = validate_bbox(document.text)
+        if not ok:
+            raise ValidationError(
+                message="Correct format: '[X1, Y1, X2, Y2]'",
+                cursor_position=len(document.text),
+            )  # Move cursor to end
+
+
+def validate_bbox(s):
+    s = remove_brackets(s)
+
+    if s == "":
+        return True
+
+    # validate number of coordinate values
+    bbox_coords = s.split(",")
+    if len(bbox_coords) != 4:
+        return False
+
+    # validate coodinate ordering
+    try:
+        bbox_coords = [float(x) for x in bbox_coords]
+    except ValueError:
+        return False
+
+    x1, y1, x2, y2 = bbox_coords
+    if x1 == x2 or y1 == y2:
+        return False
+    for lon in [x1, x2]:
+        if lon < -180 or lon > 180:
+            return False
+    for lat in [y1, y2]:
+        if lat < -90 or lat > 90:
+            return False
+
+    return True
+
+
+def ask_for_bbox(cfg):
+    """ask for a bounding box"""
+
+    DISABLED = True if cfg.bbox else False
+    return (
+        questionary.text("Select (optional) bounding box:", validate=BBoxValidator)
+        .skip_if(DISABLED, default="[-180,-90,180,90]")
+        .ask()
+    )
+
+
 def ask_for_region(self):
     """ask user for region to select (2-step process)"""
 
@@ -91,7 +153,7 @@ class Selector(object):
     def __init__(self, df):
         self._df = df[~df.ADM0_A3.isin(["ATF", "ATA"])]
         self._selection = None
-        self._bbox = [-180, 180, -90, 90]
+        self._bbox = [-180, -90, 180, 90]
         self._names = sorted(self._df.ADM0_A3.unique())
 
     @property
@@ -236,6 +298,10 @@ if __name__ == "__main__":
         pass
 
     cfg.res = "LR"
+    # cfg.bbox = False
+    cfg.bbox = [-10, 30, 40, 70]
+
+    bbox = ask_for_bbox(cfg)
 
     # resolution
     resolution = ask_for_resolution(cfg)
