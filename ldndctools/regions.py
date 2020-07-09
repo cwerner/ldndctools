@@ -99,11 +99,7 @@ def validate_bbox(s):
     for lon in [x1, x2]:
         if lon < -180 or lon > 180:
             return False
-    for lat in [y1, y2]:
-        if lat < -90 or lat > 90:
-            return False
-
-    return True
+    return not any(lat < -90 or lat > 90 for lat in [y1, y2])
 
 
 def ask_for_bbox(cfg):
