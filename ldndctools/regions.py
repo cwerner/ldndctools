@@ -298,13 +298,10 @@ if __name__ == "__main__":
         pass
 
     cfg.res = "LR"
-    # cfg.bbox = False
     cfg.bbox = [-10, 30, 40, 70]
 
-    bbox = ask_for_bbox(cfg)
-
-    # resolution
     resolution = ask_for_resolution(cfg)
+    bbox = ask_for_bbox(cfg)
 
     df = load_world_dataframe(res=resolution)
 
