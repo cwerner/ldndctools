@@ -12,6 +12,13 @@
 # Christian Werner (IMK-IFU, KIT)
 # christian.werner@kit.edu
 
+import sys
+
+if sys.version_info >= (3, 7):
+    from importlib import resources
+else:
+    import importlib_resources as resources
+
 import xarray as xr
 import numpy as np
 import pandas as pd
@@ -21,7 +28,9 @@ import progressbar as pb
 from pathlib import Path
 import xml.dom.minidom as MD
 import xml.etree.cElementTree as ET
+import tqdm
 
+import intake
 from ldndctools import __version__
 
 from .cli import cli
@@ -34,7 +43,10 @@ log.setLevel("DEBUG")
 
 NODATA = "-99.99"
 
-DPATH = Path("data")
+# TODO: there has to be a better way here...
+#       also, tqdm takes no effect
+with resources.path("data", "") as dpath:
+    DPATH = Path(dpath)
 
 
 def translateDataFormat(d):
@@ -114,6 +126,10 @@ def main():
     def _get_cfg_item(group, item, save="na"):
         return cfg[group].get(item, save)
 
+    catalog = intake.open_catalog(str(DPATH / "catalog.yml"))
+
+    log.info(f"Conf: {intake.config.conf}")
+
     BASEINFO = dict(
         AUTHOR=_get_cfg_item("info", "author"),
         EMAIL=_get_cfg_item("info", "email"),
@@ -140,7 +156,7 @@ def main():
     dres = dict(LR="0.5x0.5deg", MR="0.25x0.25deg", HR="0.0833x0.0833deg")
 
     if args.resolution in ["LR", "MR", "HR"]:
-        SOIL = DPATH / "soil" / f"GLOBAL_WISESOIL_S1_{args.resolution}.nc"
+        SOIL = catalog.soil(res=args.resolution).read()
         ADMIN = DPATH / "tmworld" / f"tmworld_{args.resolution}.nc"
         resStr = dres[args.resolution]
     else:
@@ -161,8 +177,7 @@ def main():
     log.info(f"Outfile name:    {outname}")
 
     # get cell mask from soil/ admin intersect
-    dss = xr.open_dataset(SOIL).sel(lev=1)["PROP1"]
-    soilmask = np.ma.where(dss.to_masked_array() > 0, 1, 0)
+    soilmask = np.ma.where(SOIL.PROP1.sel(lev=1).to_masked_array() > 0, 1, 0)
 
     # countries
     df = pd.read_csv(DPATH / "tmworld" / "tmworld_full_lut.txt", sep="\t")
@@ -355,13 +370,21 @@ def main():
         return a.flat[np.abs(a - a0).argmin()]
 
     def createMask_fromfile(ds, infile):
+
         df = pd.read_csv(infile, delim_whitespace=True)
         ds_x = xr.zeros_like(ds)
+        ds_id = xr.ones_like(ds, dtype="int") * np.nan if "ID" in df.columns else None
+
         for _, r in df.iterrows():
             _lon = find_nearest(ds.lon.values, r.lon)
             _lat = find_nearest(ds.lat.values, r.lat)
             ds_x.loc[dict(lon=_lon, lat=_lat)] = 1
-        return ds_x.values
+            if "ID" in df.columns:
+                ds_id.loc[dict(lon=_lon, lat=_lat)] = r.ID
+        ds_x = ds_x.values
+        if "ID" in df.columns:
+            ds_id = ds_id.values
+        return ds_x, ds_id
 
     with xr.open_dataset(ADMIN) as ds:
         lats, lons = ds.lat.values, ds.lon.values
@@ -370,8 +393,9 @@ def main():
         mask = np.zeros_like(ds.UN.values)
 
         # use coords from file
+        ids = None
         if args.file:
-            mask = createMask_fromfile(ds.UN, args.file)
+            mask, GIVEN_IDS = createMask_fromfile(ds.UN, args.file)
 
         # populate mask (incrementally)
         if len(UNR) > 0:
@@ -403,7 +427,8 @@ def main():
 
     # MAIN LOOP
     # iterate over mask to build XML
-    ds = xr.open_dataset(SOIL)
+    # TODO: cleanup
+    ds = SOIL
 
     Lcids, Lix, Ljx = [], [], []
     Dcids = {}
@@ -416,7 +441,14 @@ def main():
     for j in range(len(mask)):
         for i in range(len(mask[0])):
             if mask[j, i] == 1:
-                cid = ((len(mask) - 1) - j) * M + i if LATS[0] < LATS[-1] else j * M + i
+                if GIVEN_IDS is not None:
+                    cid = GIVEN_IDS[j, i]
+                else:
+                    cid = (
+                        ((len(mask) - 1) - j) * M + i
+                        if LATS[0] < LATS[-1]
+                        else j * M + i
+                    )
                 ids[j, i] = cid
                 Lcids.append(cid)
                 Lix.append(i)
