@@ -1,0 +1,71 @@
+plugins:
+  source:
+    - module: intake_xarray
+sources:
+  soil:
+    name: 'SOIL'
+    description: 'Default soil data for ldndctools (site file generation)'
+    driver: netcdf
+    parameters:
+      res:
+        default: 'LR'
+        allowed: ['LR', 'MR', 'HR']
+        description: 'Resolution (LR, MR or HR).'
+        type: str
+    args:
+      urlpath: 'simplecache::s3://ldndcdata/GLOBAL_WISESOIL_S1_{{res}}.nc'
+      storage_options:
+        s3:
+          anon: true
+          default_fill_cache: false
+          client_kwargs:
+            endpoint_url: 'https://s3.imk-ifu.kit.edu:8082'
+        simplecache:
+          cache_storage: '.cache'
+          same_names: true
+
+      chunks: {}
+      xarray_kwargs:
+        decode_times: false
+        engine: h5netcdf
+
+    metadata:
+      source: 'ISRIC-WISE Global Soil Database v3'
+      plot:
+          kind: 'image'
+          x: 'lon'
+          y: 'lat'
+          z: 'TOTC'
+          label: 'Total C [g cm-3]'
+          title: 'Sample plot'
+          clim: !!python/tuple [0, 500]
+          cmap: 'YlOrBr'
+          geo: true
+          logz: true
+          grid: true
+          coastline: '50m'
+          rasterize: true
+
+
+  climate_pgf3:
+    name: 'CLIMATE'
+    description: 'Princeton Global Fields 0.25x0.25 deg res daily data for ldndctools (climate file generation). Careful, VERY BIG!'
+    driver: netcdf
+    parameters:
+      year:
+        default: 2016
+        min: 1985
+        max: 2016
+        description: 'Year of daily climate data'
+        type: int
+    args:
+      urlpath: 'simplecache::s3://ldndcdata/climate/pgf3/pgf_025deg_v3_{{year}}.nc'
+      storage_options:
+        s3:
+          anon: true
+          default_fill_cache: false
+          client_kwargs:
+            endpoint_url: 'https://s3.imk-ifu.kit.edu:8082'
+        simplecache:
+          cache_storage: '.cache'
+          same_names: true
