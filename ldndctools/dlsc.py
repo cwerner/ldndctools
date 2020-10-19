@@ -128,8 +128,6 @@ def main():
 
     catalog = intake.open_catalog(str(DPATH / "catalog.yml"))
 
-    log.info(f"Conf: {intake.config.conf}")
-
     BASEINFO = dict(
         AUTHOR=_get_cfg_item("info", "author"),
         EMAIL=_get_cfg_item("info", "email"),
@@ -157,8 +155,8 @@ def main():
 
     if args.resolution in ["LR", "MR", "HR"]:
         SOIL = catalog.soil(res=args.resolution).read()
-        ADMIN = DPATH / "tmworld" / f"tmworld_{args.resolution}.nc"
-        resStr = dres[args.resolution]
+        ADMIN = catalog.admin(res=args.resolution).read()
+        res_str = dres[args.resolution]
     else:
         log.error(f"Wrong resolution: {args.resolution}. Use HR, MR or LR.")
         exit(-1)
@@ -173,14 +171,15 @@ def main():
             else:
                 outname = f"{outname}_{args.resolution}.xml"
 
-    log.info(f"Soil resolution: {args.resolution} [{resStr}]")
+    log.info(f"Soil resolution: {args.resolution} [{res_str}]")
     log.info(f"Outfile name:    {outname}")
 
     # get cell mask from soil/ admin intersect
     soilmask = np.ma.where(SOIL.PROP1.sel(lev=1).to_masked_array() > 0, 1, 0)
 
     # countries
-    df = pd.read_csv(DPATH / "tmworld" / "tmworld_full_lut.txt", sep="\t")
+    # TODO Also move to catalog
+    df = catalog.admin_lut(variant="full").read()
 
     # eu28 specific
     eu28 = "BE,DE,FR,IT,LU,NL,DK,IE,GB,GR,PT,ES,FI,AT,SE,EE,LV,LT,MT,PL,SK,SI,CZ,HU,CY,BG,RO,HR".split(
@@ -195,11 +194,12 @@ def main():
     Dcountries = dict(zip(df.NAME, df.UN))
 
     # regions
-    dfr = pd.read_csv(DPATH / "tmworld" / "tmworld_regions_lut.txt", sep="\t")
+    dfr = catalog.admin_lut(variant="regions").read()
+
     Dregions = dict(zip(dfr.R_Name, dfr.R_Code))
 
     # subregions
-    dfsr = pd.read_csv(DPATH / "tmworld" / "tmworld_subregions_lut.txt", sep="\t")
+    dfsr = catalog.admin_lut(variant="subregions").read()
     Dsubregions = dict(zip(dfsr.SR_Name, dfsr.SR_Code))
 
     # lists with selection ids for tmworld netcdfs
@@ -386,7 +386,7 @@ def main():
             ds_id = ds_id.values
         return ds_x, ds_id
 
-    with xr.open_dataset(ADMIN) as ds:
+    with ADMIN as ds:
         lats, lons = ds.lat.values, ds.lon.values
 
         # init empty mask
@@ -394,6 +394,7 @@ def main():
 
         # use coords from file
         ids = None
+        GIVEN_IDS = None
         if args.file:
             mask, GIVEN_IDS = createMask_fromfile(ds.UN, args.file)
 
