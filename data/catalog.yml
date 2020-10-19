@@ -29,8 +29,6 @@ sources:
         decode_times: false
         engine: h5netcdf
 
-<<<<<<< HEAD
-=======
   admin:
     name: 'ADMIN'
     description: 'Default country and region layer'
@@ -109,7 +107,7 @@ sources:
         decode_times: false
         engine: h5netcdf
 
->>>>>>> outsource_grids
+
     metadata:
       source: 'ISRIC-WISE Global Soil Database v3'
       plot:
