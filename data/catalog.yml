@@ -29,6 +29,84 @@ sources:
         decode_times: false
         engine: h5netcdf
 
+  admin:
+    name: 'ADMIN'
+    description: 'Default country and region layer'
+    driver: netcdf
+    parameters:
+      res:
+        default: 'LR'
+        allowed: ['LR', 'MR', 'HR']
+        description: 'Resolution (LR, MR or HR).'
+        type: str
+    args:
+      urlpath: 'simplecache::s3://ldndcdata/tmworld/tmworld_{{res}}.nc'
+      storage_options:
+        s3:
+          anon: true
+          default_fill_cache: false
+          client_kwargs:
+            endpoint_url: 'https://s3.imk-ifu.kit.edu:8082'
+        simplecache:
+          cache_storage: '.cache'
+          same_names: true
+
+      chunks: {}
+      xarray_kwargs:
+        decode_times: false
+        engine: h5netcdf
+
+  admin_lut:
+    name: 'ADMIN_LUT'
+    description: 'Default country and region layer lookup table'
+    driver: csv
+    parameters:
+      variant:
+        default: 'full'
+        allowed: ['full', 'regions', 'subregions']
+        description: 'LUT variant (full, regions, subregions).'
+        type: str
+    args:
+      urlpath: 'simplecache::s3://ldndcdata/tmworld/tmworld_{{variant}}_lut.txt'
+      csv_kwargs:
+        sep: '\t'
+      storage_options:
+        s3:
+          anon: true
+          default_fill_cache: false
+          client_kwargs:
+            endpoint_url: 'https://s3.imk-ifu.kit.edu:8082'
+        simplecache:
+          cache_storage: '.cache'
+          same_names: true
+
+  elevation:
+    name: 'ELEVATION'
+    description: 'Default elevations for climate file generation'
+    driver: netcdf
+    parameters:
+      res:
+        default: 'LR'
+        allowed: ['LR', 'MR']
+        description: 'Resolution (LR, MR).'
+        type: str
+    args:
+      urlpath: 'simplecache::s3://ldndcdata/misc/elevation_{{res}}.nc'
+      storage_options:
+        s3:
+          anon: true
+          default_fill_cache: false
+          client_kwargs:
+            endpoint_url: 'https://s3.imk-ifu.kit.edu:8082'
+        simplecache:
+          cache_storage: '.cache'
+          same_names: true
+
+      chunks: {}
+      xarray_kwargs:
+        decode_times: false
+        engine: h5netcdf
+
     metadata:
       source: 'ISRIC-WISE Global Soil Database v3'
       plot:
