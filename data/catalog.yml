@@ -1,6 +1,8 @@
 plugins:
   source:
     - module: intake_xarray
+    - module: intake_geopandas
+
 sources:
   soil:
     name: 'SOIL'
@@ -25,9 +27,6 @@ sources:
           same_names: true
 
       chunks: {}
-      xarray_kwargs:
-        decode_times: false
-        engine: h5netcdf
 
   admin:
     name: 'ADMIN'
@@ -52,9 +51,24 @@ sources:
           same_names: true
 
       chunks: {}
-      xarray_kwargs:
-        decode_times: false
-        engine: h5netcdf
+
+  admin_new:
+    name: 'ADMIN_NEW'
+    description: 'New country and region layer'
+    driver: geopandasfile #intake_geopandas.geopandas.ShapefileSource
+    parameters:
+      res:
+        default: 10
+        allowed: [10, 50, 110]
+        description: 'Resolution (10, 50 or 110).'
+        type: int
+    args:
+      urlpath: 'simplecache::https://www.naturalearthdata.com/http//www.naturalearthdata.com/download/{{res}}m/cultural/ne_{{res}}m_admin_0_countries.zip'
+      use_fsspec: True
+      storage_options:
+        simplecache:
+              cache_storage: '.cache'
+              same_names: true
 
   admin_lut:
     name: 'ADMIN_LUT'
@@ -70,6 +84,7 @@ sources:
       urlpath: 'simplecache::s3://ldndcdata/tmworld/tmworld_{{variant}}_lut.txt'
       csv_kwargs:
         sep: '\t'
+        engine: 'python'
       storage_options:
         s3:
           anon: true
@@ -102,12 +117,6 @@ sources:
           cache_storage: '.cache'
           same_names: true
 
-      chunks: {}
-      xarray_kwargs:
-        decode_times: false
-        engine: h5netcdf
-
-
     metadata:
       source: 'ISRIC-WISE Global Soil Database v3'
       plot:
@@ -124,7 +133,6 @@ sources:
           grid: true
           coastline: '50m'
           rasterize: true
-
 
   climate_pgf3:
     name: 'CLIMATE'
