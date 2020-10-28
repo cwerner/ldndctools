@@ -2,9 +2,11 @@ netcdf4
 numpy
 intake
 intake-xarray
-s3fs
-h5netcdf
 pandas
 pyyaml
 progressbar
+questionary
+s3fs
+streamlit
+streamlit-folium
 xarray
