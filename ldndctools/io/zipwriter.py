@@ -1,12 +1,12 @@
 import datetime
 import io
-from typing import Iterable, Tuple, Union
+from typing import Iterable, Tuple, Union, Any
 from pathlib import Path
 from zipfile import ZipFile, ZipInfo
 
 
 class ZipWriter:
-    def __init__(self, files: Iterable[Tuple[str, bytes]]):
+    def __init__(self, files: Iterable[Tuple[str, Any]]):
         self.date_time = datetime.datetime.now().timetuple()
         self.files = {k: v for k, v in files}
 

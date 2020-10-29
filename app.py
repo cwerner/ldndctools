@@ -3,14 +3,10 @@ import intake
 import io
 import sys
 
-import xarray as xr
-import rioxarray
-
 from ldndctools.gui.utils import provide_state
 from ldndctools.gui.page1 import Page1
 from ldndctools.gui.download_button import download_button
 
-from ldndctools.io.xmlwriter import SiteXmlWriter
 from ldndctools.io.zipwriter import ZipWriter
 
 from ldndctools.cli.selector import Selector
