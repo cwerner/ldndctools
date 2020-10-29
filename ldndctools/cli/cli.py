@@ -10,7 +10,7 @@ import argparse
 import datetime as dt
 import logging
 
-from . import __version__
+from ldndctools import __version__
 
 log = logging.getLogger(__name__)
 

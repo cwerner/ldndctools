@@ -8,9 +8,10 @@ git+git://github.com/intake/intake-geopandas@master#egg=intake-geopandas
 intake-xarray
 pandas
 pyyaml
-progressbar
 questionary
+rioxarray
 s3fs
 streamlit
 streamlit-folium
+tqdm
 xarray
