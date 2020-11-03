@@ -1,96 +1,131 @@
-import string
-import xml.dom.minidom as MD
-import xml.etree.cElementTree as ET
+import math
+import xml.dom.minidom as md
+import xml.etree.cElementTree as et
 
-from ldndctools.misc.functions import calcHydaulicProperties
+from ldndctools.misc.types import NODATA, LayerData
 
-NODATA = "-99.99"
+
+def calc_hydraulic_properties(ld: LayerData) -> LayerData:
+    """Calc hydraulic properties based on et al. (1996)
+
+    shape parameters: Woesten et al. (1999) Geoderma
+
+    OM (% organic matter)
+    D (bulk density)
+    topsoil 1, subsoil 0
+    C, S, (clay, silt in %)
+
+    formula:
+    θ_s = 0.7919 + 0.001691 * C - 0.29619 * D - 0.000001491 * S*S + \
+          0.0000821 * OM * OM + 0.02427 * C**-1 + 0.01113 * S**-1 + \
+          0.01472 * math.ln( S ) - 0.0000733 * OM * C - 0.000619 * D * C - \
+          0.001183 * D * OM - 0.0001664 * topsoil * S
+
+    ad-hoc AG Boden
+
+    Sand, Clay [%], BD [g cm-3], Corg [%]
+    """
+
+    # convert units
+    corg = ld.corg * 100
+    clay = ld.clay * 100
+    sand = ld.sand * 100
+    bd = ld.bd
+
+    theta_r = 0.015 + 0.005 * clay + 0.014 * corg
+    theta_s = 0.81 - 0.283 * bd + 0.001 * clay
+
+    log_n = 0.053 - 0.009 * sand - 0.013 * clay + 0.00015 * sand ** 2
+    log_alpha = -2.486 + 0.025 * sand - 0.351 * corg - 2.617 * bd - 0.023 * clay
+
+    alpha = math.e ** log_alpha
+    vgn = math.e ** log_n
+    vgm = 1.0  # (1.0 - (1.0/ vGn)) off as we do not use texture classes but real frac
+
+    field_capacity = theta_r + (theta_s - theta_r) / math.pow(
+        (1.0 + math.pow(alpha * 100.0, vgn)), vgm
+    )
+    wilting_point = theta_r + (theta_s - theta_r) / math.pow(
+        (1.0 + math.pow(alpha * 15800.0, vgn)), vgm
+    )
+
+    ld.wcmax = field_capacity * 1000
+    ld.wcmin = wilting_point * 1000
+
+    return ld
 
 
 class BaseXML(object):
-    def __init__(self, startY=2000, endY=2012, **kwargs):
+    def __init__(self, start_year: int = 2000, end_year: int = 2012, **kwargs):
         self.xml = None  # ET.Element("setups"), define by child
-        self.startY = startY
-        self.endY = endY
+        self.startY = start_year
+        self.endY = end_year
         self.tags = {}
-        # --- dict of initial xml tags
-        desc = ET.Element("description")
+        desc = et.Element("description")
 
         for t in "AUTHOR,EMAIL,DATE,DATASET,VERSION,SOURCE".split(","):
             if t in kwargs:
-                e = ET.SubElement(desc, t.lower())
+                e = et.SubElement(desc, t.lower())
                 e.text = str(kwargs[t])
         self.tags["desc"] = desc
 
-    def write(self, ID=None, filename="all.xml"):
-        strOut = MD.parseString(ET.tostring(self.xml)).toprettyxml()
+    def write(self, filename="all.xml"):
+        out = md.parseString(et.tostring(self.xml)).toprettyxml()
         # fix special characters
         sc = {"&gt;": ">", "&lt;": "<"}
         for key, val in sc.items():
-            strOut = string.replace(strOut, key, val)
-        open(filename, "w").write(strOut)
+            out = out.replace(key, val)
+        open(filename, "w").write(out)
 
 
 class SiteXML(BaseXML):
     def __init__(self, **k):
         BaseXML.__init__(self, **k)
 
-        lat, lon = str(k["lat"]), str(k["lon"])
+        _lat = str(k["lat"])
+        _lon = str(k["lon"])
+        _id = f'{k["id"]}' if "id" in k else "0"
+        _use_history = str(k["usehistory"]) if "usehistory" in k else "arable"
 
-        theId = "%d" % k["id"] if "id" in k else "0"
-        theUsehistory = str(k["usehistory"]) if "usehistory" in k else "arable"
-
-        self.xml = ET.Element("site", id=theId, lat=lat, lon=lon)
+        self.xml = et.Element("site", id=_id, lat=_lat, lon=_lon)
         self.xml.append(self.tags["desc"])
 
-        # general tags
-        ET.SubElement(self.xml, "general")
-
-        # soil tags
-        soil = ET.SubElement(self.xml, "soil")
-
-        dargs = dict(
-            usehistory=theUsehistory,
+        kwargs = dict(
+            usehistory=_use_history,
             soil="NONE",
             humus="NONE",
             lheight="0.0",
-            corg5=NODATA,
-            corg30=NODATA,
+            corg5=str(NODATA),
+            corg30=str(NODATA),
         )
-        ET.SubElement(soil, "general", **dargs)
-        ET.SubElement(soil, "layers")
 
-    def addSoilLayer(self, DATA, ID=None, litter=False, accuracy={}, extra_split=False):
+        et.SubElement(self.xml, "general")
+        soil = et.SubElement(self.xml, "soil")
+        et.SubElement(soil, "general", **kwargs)
+        et.SubElement(soil, "layers")
+
+    def add_soil_layer(
+        self, ld: LayerData, litter: bool = False, extra_split: bool = False
+    ):
         """ this adds a soil layer to the given site (to current if no ID given)"""
-        # only calculate hydr. properties if we have a mineral soil layer added
+        # only calculate hydrological properties if we have a mineral soil layer added
         if not litter:
-            DATA["wcmax"], DATA["wcmin"] = calcHydaulicProperties(DATA)
+            ld = calc_hydraulic_properties(ld)
 
-        vars = "depth,split,ph,scel,bd,sks,norg,corg,clay,wcmax,wcmin,sand,silt,iron"
-        dargs = {k: NODATA for k in vars.split(",")}
-        dargs["split"] = "1"
-        soilLayer = ET.Element("layer", **dargs)
-        keys = DATA.keys()
-        for k in keys:
-            digits = 2
-            if k in accuracy.keys():
-                digits = accuracy[k]
-                if digits == 0:
-                    # int
-                    soilLayer.attrib[k] = str(int(round(DATA[k], digits)))
-                else:
-                    soilLayer.attrib[k] = str(round(DATA[k], digits))
+        ld.split = 1
+        soil_layer = et.Element("layer", **ld.as_dict(ignore=["topd", "botd"]))
 
         if extra_split:
             # create identical top layer with finer discretization
-            soilLayerExtra = soilLayer.copy()
-            soilLayerExtra.attrib["depth"] = 20
-            soilLayerExtra.attrib["split"] = 4
+            # TODO: write test to check expected stratification
+            soil_layer_extra = soil_layer.copy()
+            soil_layer_extra.attrib["depth"] = "20"
+            soil_layer_extra.attrib["split"] = "4"
 
-            self.xml.find("./soil/layers").append(soilLayerExtra)
+            self.xml.find("./soil/layers").append(soil_layer_extra)
 
             # adjust height of original layer to be consistent
-            soilLayer.attrib["depth"] = 180
-            soilLayer.attrib["split"] = 9
+            soil_layer.attrib["depth"] = "180"
+            soil_layer.attrib["split"] = "9"
 
-        self.xml.find("./soil/layers").append(soilLayer)
+        self.xml.find("./soil/layers").append(soil_layer)
