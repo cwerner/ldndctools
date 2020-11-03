@@ -41,7 +41,7 @@ class RangeAction(argparse.Action):
             for e in s:
                 try:
                     _ = int(e)
-                except:
+                except ValueError:
                     return False
             if int(s[1]) < int(s[0]):
                 return False
@@ -114,22 +114,7 @@ def cli():
     )
 
     parser.add_argument(
-        "--bboxoff",
-        dest="bboxoff",
-        default=False,
-        action="store_true",
-        help="produce netcdf file without bbox",
-    )
-
-    parser.add_argument(
         "-c", dest="config", metavar="MYCONF", help="use MYCONF file as config"
-    )
-
-    parser.add_argument(
-        "--country",
-        dest="ccode",
-        default=None,
-        help="for non-interactive exec give country code(s) [chain with +]",
     )
 
     parser.add_argument(
@@ -162,7 +147,7 @@ def cli():
         "--region",
         dest="rcode",
         default=None,
-        help="for non-interactive exec give region code(s) [chain with +]",
+        help="for non-interactive exec give country or region code(s) [chain with +]",
     )
 
     parser.add_argument(
