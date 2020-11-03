@@ -22,7 +22,7 @@ repos:
   - id: isort
 
 - repo: https://github.com/psf/black
-  rev: stable
+  rev: 20.8b1
   hooks:
   - id: black
     exclude: versioneer.py ^ldndctools/_version.py
