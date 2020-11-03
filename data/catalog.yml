@@ -33,13 +33,13 @@ sources:
     description: 'Country and region layer from naturalearthdata'
     driver: geopandasfile
     parameters:
-      res:
+      scale:
         default: 10
         allowed: [10, 50, 110]
         description: 'Resolution (10, 50 or 110m).'
         type: int
     args:
-      urlpath: 'simplecache::https://www.naturalearthdata.com/http//www.naturalearthdata.com/download/{{res}}m/cultural/ne_{{res}}m_admin_0_countries.zip'
+      urlpath: 'simplecache::https://www.naturalearthdata.com/http//www.naturalearthdata.com/download/{{scale}}m/cultural/ne_{{scale}}m_admin_0_countries.zip'
       use_fsspec: True
       storage_options:
         simplecache:

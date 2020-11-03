@@ -63,12 +63,12 @@ def main(state=None):
     res = widget_resolution()
 
     # 110m is pretty poor - LR also gets 50m
-    rmap = {RES.LR: 50, RES.MR: 50, RES.HR: 10}
+    res_scale_mapper = {RES.LR: 50, RES.MR: 50, RES.HR: 10}
 
     with resources.path("data", "catalog.yml") as cat:
         catalog = intake.open_catalog(str(cat))
 
-    df = catalog.admin(res=rmap[res]).read()
+    df = catalog.admin(scale=res_scale_mapper[res]).read()
     selector = Selector(df)
 
     # build gui
