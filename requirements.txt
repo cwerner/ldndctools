@@ -1,10 +1,10 @@
-netcdf4
-numpy
+h5netcdf
 intake
 intake-xarray
-s3fs
-h5netcdf
+netcdf4
+numpy
 pandas
-pyyaml
 progressbar
+pyyaml
+s3fs
 xarray

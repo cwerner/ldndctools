@@ -7,7 +7,7 @@ SR_Code	SR_Name
 029	"Caribbean"
 013	"Central America"
 005	"South America"
-021	"Northern America"   
+021	"Northern America"
 143	"Central Asia"
 030	"Eastern Asia"
 034	"Southern Asia"
