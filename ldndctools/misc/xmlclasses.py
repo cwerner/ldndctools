@@ -1,5 +1,6 @@
-import xml.etree.cElementTree as ET
+import string
 import xml.dom.minidom as MD
+import xml.etree.cElementTree as ET
 
 from ldndctools.misc.functions import calcHydaulicProperties
 
@@ -42,8 +43,8 @@ class SiteXML(BaseXML):
         self.xml = ET.Element("site", id=theId, lat=lat, lon=lon)
         self.xml.append(self.tags["desc"])
 
-        # gernal tags
-        general = ET.SubElement(self.xml, "general")
+        # general tags
+        ET.SubElement(self.xml, "general")
 
         # soil tags
         soil = ET.SubElement(self.xml, "soil")
@@ -57,20 +58,16 @@ class SiteXML(BaseXML):
             corg30=NODATA,
         )
         ET.SubElement(soil, "general", **dargs)
-        layers = ET.SubElement(soil, "layers")
+        ET.SubElement(soil, "layers")
 
     def addSoilLayer(self, DATA, ID=None, litter=False, accuracy={}, extra_split=False):
         """ this adds a soil layer to the given site (to current if no ID given)"""
         # only calculate hydr. properties if we have a mineral soil layer added
-        if litter == False:
+        if not litter:
             DATA["wcmax"], DATA["wcmin"] = calcHydaulicProperties(DATA)
 
-        dargs = {
-            k: NODATA
-            for k in "depth,split,ph,scel,bd,sks,norg,corg,clay,wcmax,wcmin,sand,silt,iron".split(
-                ","
-            )
-        }
+        vars = "depth,split,ph,scel,bd,sks,norg,corg,clay,wcmax,wcmin,sand,silt,iron"
+        dargs = {k: NODATA for k in vars.split(",")}
         dargs["split"] = "1"
         soilLayer = ET.Element("layer", **dargs)
         keys = DATA.keys()

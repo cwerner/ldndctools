@@ -1,17 +1,20 @@
 #!/usr/bin/env python3
 
-import xarray as xr
-import numpy as np
-import pandas as pd
-import os, datetime, shutil, string
+import datetime
 import io
+import os
+import shutil
 from optparse import OptionParser
+
+import numpy as np
+import xarray as xr
 
 # chunked netcdf input speedup 15x compared to regular netcdf !!!
 
 dataInfo = {
     "title": "PGF v2 Climate Data",
-    "source": "Princeton University Hydroclimatology Group Bias Corrected 59-yr (1948-2006) Meteorological Forcing Dataset",
+    "source": "Princeton University Hydroclimatology Group Bias Corrected"
+    + "59-yr (1948-2006) Meteorological Forcing Dataset",
     "data": "PGF v2 0.5 degrees 1901-2012",
     "project": "not applicable",
     "contact": "Christian Werner (christian.werner@kit.edu)",
@@ -32,11 +35,11 @@ def main(
     fcnttot=None,
 ):
 
-    if coords == None:
+    if coords is None:
         print("need to specify coords")
         exit(1)
 
-    if fcnt != None:
+    if fcnt is not None:
         outName += "." + str(fcnt).zfill(3)
         print("processing subset %s (%d/%d)" % (outName, fcnt + 1, fcnttot))
 
@@ -89,7 +92,8 @@ def main(
     tamp_yr = np.array(tamp_yr).mean(axis=0)
     wind_yr = np.array(wind_yr).mean(axis=0)
 
-    coord_data = [x for _, x in list(ds.groupby("points"))]
+    # TODO: remove this?
+    # coord_data = [x for _, x in list(ds.groupby("points"))]
 
     # optimize here (no copy !!!)
 
@@ -97,7 +101,7 @@ def main(
     for _, cd in ds.groupby("points"):
         # for i, cd in enumerate(coord_data):
 
-        if names != None:
+        if names is not None:
             name = names[i]
 
         # cid
@@ -178,7 +182,7 @@ def main(
 
             globalStr = """%%global
     time = %s/1
-    
+
 """ % str(
                 startDate
             )
@@ -203,7 +207,7 @@ def main(
             "prec": str(int(round(prcp_yr[i], 0))),
         }
 
-        if names != None:
+        if names is not None:
             generalD.update({"name": name})
 
         generalStr = (
@@ -279,7 +283,7 @@ USAGE examples:
 > python NLCC_v01.py -b "5,25,100,110" -y "2005-2012" pgf2_dir clim_vietnam.txt
 
 (2) Single site (Spain):
-> python NLCC_v01.py -c "39.42416,4.07138,Spanien" pgf2_dir clim_spanien.txt  
+> python NLCC_v01.py -c "39.42416,4.07138,Spanien" pgf2_dir clim_spanien.txt
 
 (3) Multiple sites from coord file:
 > python NLCC_v01.py -s sites.txt pgf2_dir clim_sites.txt
@@ -358,7 +362,7 @@ ___________________________________________
     CELL_HALF = CELL_RES * 0.5
     COORDTHRESHOLD = 100
 
-    if options.chunks != None:
+    if options.chunks is not None:
         COORDTHRESHOLD = int(options.chunks)
 
     # year range
@@ -379,7 +383,7 @@ ___________________________________________
     # Works very well for < 100 coords
     # hits memory limitations with bigger lists !!!
 
-    if options.bbox != None:
+    if options.bbox is not None:
         # bounding box mode
         sep = ","
         if "/" in options.bbox:
@@ -429,7 +433,7 @@ ___________________________________________
                 coords.append((la, lo))
                 names.append("none")
 
-    elif options.sites != None:
+    elif options.sites is not None:
         # use sites file
 
         for lcnt, line in enumerate(open(options.sites, "r")):
@@ -439,7 +443,7 @@ ___________________________________________
                 names.append(name)
                 coords.append(coord)
 
-    elif options.coord != None:
+    elif options.coord is not None:
         sep = ","
         if "/" in options.coord:
             sep = "/"
@@ -457,7 +461,7 @@ ___________________________________________
         coords = [(float(lat), float(lon))]
         names = [name]
 
-    elif options.mask != None:
+    elif options.mask is not None:
         pass
 
     else:
@@ -468,7 +472,7 @@ ___________________________________________
     print("Dataset: PGF2 v2 0.5 deg")
     print("Climate data range : %d-%d" % (YEARS[0], YEARS[-1]))
     print("Coords to process  :", len(coords))
-    if options.bbox != None:
+    if options.bbox is not None:
         print(bboxStr)
     print("------------------------------------------")
 

@@ -1,11 +1,10 @@
 import math
-import xml.etree.cElementTree as ET
 import xml.dom.minidom as MD
+import xml.etree.cElementTree as ET
 
 
 def prettify(elem):
-    """Return a pretty-printed XML string for the Element.
-    """
+    """Return a pretty-printed XML string for the Element."""
     rough_string = ET.tostring(elem, "utf-8")
     reparsed = MD.parseString(rough_string)
     str1 = reparsed.toprettyxml(indent="  ")
@@ -27,8 +26,10 @@ def calcHydaulicProperties(D):
     # topsoil 1, subsoil 0
     # C, S,   (clay, silt in %)
     #
-    # ThetaS = 0.7919 + 0.001691 * C - 0.29619 * D - 0.000001491 * S*S + 0.0000821 * OM * OM + 0.02427 * C**-1 + 0.01113 * S**-1 + \
-    #         0.01472 * math.ln( S ) - 0.0000733 * OM * C - 0.000619 * D * C - 0.001183 * D * OM - 0.0001664 * topsoil * S
+    # ThetaS = 0.7919 + 0.001691 * C - 0.29619 * D - 0.000001491 * S*S + 0.0000821 * \
+    #          OM * OM + 0.02427 * C**-1 + 0.01113 * S**-1 + 0.01472 * \
+    #          math.ln( S ) - 0.0000733 * OM * C - 0.000619 * D * \
+    #          C - 0.001183 * D * OM - 0.0001664 * topsoil * S
 
     # ad-hoc AG Boden
     #
@@ -47,10 +48,10 @@ def calcHydaulicProperties(D):
 
     try:
         ALPHA = math.e ** logAlpha
-    except:
+    except ValueError:
         print(D)
     vGn = math.e ** logN
-    vGm = 1.0  # (1.0 - (1.0/ vGn)) disabled as we do not use texture classes but real fractions
+    vGm = 1.0  # (1.0 - (1.0/ vGn)) OFF, we don't use texture cl. (rather real fract.)
 
     FLDcap = ThetaR + (ThetaS - ThetaR) / math.pow(
         (1.0 + math.pow(ALPHA * 100.0, vGn)), vGm
@@ -61,7 +62,7 @@ def calcHydaulicProperties(D):
     return FLDcap * 1000, WILTpt * 1000
 
 
-# -------------------------------- F U N C T I O N S (currently not used) ------------------------------------
+# ----------------- F U N C T I O N S (currently not used) ----------------------
 def calcLitter(litterMass, litname):  # mass in t C ha-1
     if litname == "MULL":
         density = 0.2
@@ -74,7 +75,8 @@ def calcLitter(litterMass, litname):  # mass in t C ha-1
         accumulationFactor = 3.5
 
     # explanation:
-    #   (tCha-1) > x2 > tBMha-1 > x0.1 > kgBMm-2 > x0.1 > gBMcm-2 > /density > height_cm > *10 > height_mm
+    #   (tCha-1) > x2 > tBMha-1 > x0.1 > kgBMm-2 > x0.1 > gBMcm-2 >
+    #   /density > height_cm > *10 > height_mm
     # littermass (t C ha-1) * 2 (BM conv) * 0.1 * 0.1 / density * 10
     depth = ((litterMass * accumulationFactor * 2 * 0.1 * 0.1) / density) * 10.0
     numberOfLayers = math.floor(depth / 20.0)
