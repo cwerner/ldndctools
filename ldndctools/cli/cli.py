@@ -135,11 +135,21 @@ def cli():
     )
 
     parser.add_argument(
+        "-i",
+        "--interactive",
+        action="store_true",
+        dest="interactive",
+        default=False,
+        help="select regions or countries",
+    )
+
+    parser.add_argument(
         "-r",
         "--res",
         dest="resolution",
         default="HR",
-        metavar="LR,MR,HR",
+        metavar="LR, MR, HR",
+        type=str.upper,
         help="data res (0.083, 0.25, 0.5)",
     )
 
