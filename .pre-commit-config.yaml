@@ -4,4 +4,4 @@ repos:
     hooks:
     - id: black
       exclude: versioneer.py ^ldndctools/_version.py
-      language_version: python3.7
+      language_version: python3
