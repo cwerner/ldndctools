@@ -19,24 +19,21 @@ if sys.version_info >= (3, 7):
 else:
     import importlib_resources as resources
 
-import xarray as xr
-
-import numpy as np
-import pandas as pd
 import logging
 import os
-import datetime
 from pathlib import Path
 
 import intake
-
+import numpy as np
+import pandas as pd
+import xarray as xr
 from tqdm import tqdm
 
 from ldndctools.cli.cli import cli
 from ldndctools.cli.selector import Selector
 from ldndctools.extra import get_config, set_config
-from ldndctools.misc.types import RES
 from ldndctools.misc.create_data import create_dataset
+from ldndctools.misc.types import RES
 
 log = logging.getLogger(__name__)
 
@@ -86,14 +83,15 @@ def main():
     def _get_cfg_item(group, item, save="na"):
         return cfg[group].get(item, save)
 
-    BASEINFO = dict(
-        AUTHOR=_get_cfg_item("info", "author"),
-        EMAIL=_get_cfg_item("info", "email"),
-        DATE=str(datetime.datetime.now()),
-        DATASET=_get_cfg_item("project", "dataset"),
-        VERSION=_get_cfg_item("project", "version", save="0.1"),
-        SOURCE=_get_cfg_item("project", "source"),
-    )
+    # TODO: move this to file
+    # BASEINFO = dict(
+    #     AUTHOR=_get_cfg_item("info", "author"),
+    #     EMAIL=_get_cfg_item("info", "email"),
+    #     DATE=str(datetime.datetime.now()),
+    #     DATASET=_get_cfg_item("project", "dataset"),
+    #     VERSION=_get_cfg_item("project", "version", save="0.1"),
+    #     SOURCE=_get_cfg_item("project", "source"),
+    # )
 
     cfg["interactive"] = True
 
@@ -105,7 +103,7 @@ def main():
     args.rcode = os.environ.get("DLSC_REGION", args.rcode)
     args.ccode = os.environ.get("DLSC_COUNTRY", args.ccode)
 
-    if not RES.has_key(args.resolution):
+    if not RES.contains(args.resolution):
         log.error(f"Wrong resolution: {args.resolution}. Use HR, MR or LR.")
         exit(-1)
 
@@ -126,8 +124,8 @@ def main():
 
     rmap = {RES.LR: 50, RES.MR: 50, RES.HR: 10}
 
-    ## # resolution
-    ## resolution = ask_for_resolution(cfg)
+    # # resolution
+    # resolution = ask_for_resolution(cfg)
 
     with resources.path("data", "catalog.yml") as cat:
         catalog = intake.open_catalog(str(cat))

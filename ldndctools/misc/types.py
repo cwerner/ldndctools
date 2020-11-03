@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Optional, Iterable, Dict
+from typing import Dict, Iterable, Optional
 
 try:
     from dataclasses import dataclass
@@ -14,7 +14,7 @@ class BetterEnum(Enum):
     """a better enum type that also allows checking for members"""
 
     @classmethod
-    def has_key(cls, name):
+    def contains(cls, name):
         return name in cls.__members__
 
     @classmethod
