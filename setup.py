@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 
-import versioneer
+from os import path
+
 from setuptools import find_packages, setup
 
-from os import path
-import re
+import versioneer
 
 DISTNAME = "ldndctools"
 LICENSE = "Apache"

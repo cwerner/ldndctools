@@ -1,4 +1,4 @@
-![Latest Release](https://img.shields.io/github/tag/cwerner/ldndctools.svg) 
+![Latest Release](https://img.shields.io/github/tag/cwerner/ldndctools.svg)
 ![Size](https://img.shields.io/github/repo-size/cwerner/ldndctools.svg)
 
 
@@ -13,7 +13,6 @@ Tools:
 Sample files for climate data (source: Sheffield et al., Princton, USA) and
 soil data (ISRIC-WISE, NL) are included.
 
-[Christian Werner](mailto:christian.werner@kit.edu)  
-IMK-IFU, Karlsruhe Institute of Technology  
-2019/10/13  
-
+[Christian Werner](mailto:christian.werner@kit.edu)
+IMK-IFU, Karlsruhe Institute of Technology
+2019/10/13
