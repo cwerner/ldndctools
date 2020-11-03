@@ -49,7 +49,7 @@ def _parse_config(cfgFile):
     """ read yaml config file and modify special properties"""
 
     with open(cfgFile, "r") as ymlfile:
-        cfg = yaml.load(ymlfile)
+        cfg = yaml.load(ymlfile, yaml.SafeLoader)
 
     return cfg
 
