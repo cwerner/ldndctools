@@ -1,5 +1,4 @@
 boto3
-# HEAD version of geopandas/ intake-geopandas to allow inmemeory read of zipped shapefiles
 git+git://github.com/geopandas/geopandas@master#egg=geopandas
 intake
 git+git://github.com/intake/intake-geopandas@master#egg=intake-geopandas
