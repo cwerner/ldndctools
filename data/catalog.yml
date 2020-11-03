@@ -1,6 +1,8 @@
 plugins:
   source:
     - module: intake_xarray
+    - module: intake_geopandas
+
 sources:
   soil:
     name: 'SOIL'
@@ -25,60 +27,24 @@ sources:
           same_names: true
 
       chunks: {}
-      xarray_kwargs:
-        decode_times: false
-        engine: h5netcdf
 
   admin:
     name: 'ADMIN'
-    description: 'Default country and region layer'
-    driver: netcdf
+    description: 'Country and region layer from naturalearthdata'
+    driver: geopandasfile
     parameters:
-      res:
-        default: 'LR'
-        allowed: ['LR', 'MR', 'HR']
-        description: 'Resolution (LR, MR or HR).'
-        type: str
+      scale:
+        default: 10
+        allowed: [10, 50, 110]
+        description: 'Resolution (10, 50 or 110m).'
+        type: int
     args:
-      urlpath: 'simplecache::s3://ldndcdata/tmworld/tmworld_{{res}}.nc'
+      urlpath: 'simplecache::https://www.naturalearthdata.com/http//www.naturalearthdata.com/download/{{scale}}m/cultural/ne_{{scale}}m_admin_0_countries.zip'
+      use_fsspec: True
       storage_options:
-        s3:
-          anon: true
-          default_fill_cache: false
-          client_kwargs:
-            endpoint_url: 'https://s3.imk-ifu.kit.edu:8082'
         simplecache:
-          cache_storage: '.cache'
-          same_names: true
-
-      chunks: {}
-      xarray_kwargs:
-        decode_times: false
-        engine: h5netcdf
-
-  admin_lut:
-    name: 'ADMIN_LUT'
-    description: 'Default country and region layer lookup table'
-    driver: csv
-    parameters:
-      variant:
-        default: 'full'
-        allowed: ['full', 'regions', 'subregions']
-        description: 'LUT variant (full, regions, subregions).'
-        type: str
-    args:
-      urlpath: 'simplecache::s3://ldndcdata/tmworld/tmworld_{{variant}}_lut.txt'
-      csv_kwargs:
-        sep: '\t'
-      storage_options:
-        s3:
-          anon: true
-          default_fill_cache: false
-          client_kwargs:
-            endpoint_url: 'https://s3.imk-ifu.kit.edu:8082'
-        simplecache:
-          cache_storage: '.cache'
-          same_names: true
+              cache_storage: '.cache'
+              same_names: true
 
   elevation:
     name: 'ELEVATION'
@@ -101,30 +67,6 @@ sources:
         simplecache:
           cache_storage: '.cache'
           same_names: true
-
-      chunks: {}
-      xarray_kwargs:
-        decode_times: false
-        engine: h5netcdf
-
-
-    metadata:
-      source: 'ISRIC-WISE Global Soil Database v3'
-      plot:
-          kind: 'image'
-          x: 'lon'
-          y: 'lat'
-          z: 'TOTC'
-          label: 'Total C [g cm-3]'
-          title: 'Sample plot'
-          clim: !!python/tuple [0, 500]
-          cmap: 'YlOrBr'
-          geo: true
-          logz: true
-          grid: true
-          coastline: '50m'
-          rasterize: true
-
 
   climate_pgf3:
     name: 'CLIMATE'
