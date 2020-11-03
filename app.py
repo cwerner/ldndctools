@@ -1,19 +1,17 @@
-import streamlit as st
-import intake
 import io
 import sys
 
-from ldndctools.gui.utils import provide_state
-from ldndctools.gui.page1 import Page1
-from ldndctools.gui.download_button import download_button
-
-from ldndctools.io.zipwriter import ZipWriter
+import intake
+import streamlit as st
 
 from ldndctools.cli.selector import Selector
+from ldndctools.gui.download_button import download_button
+from ldndctools.gui.page1 import Page1
+from ldndctools.gui.utils import provide_state
+from ldndctools.io.zipwriter import ZipWriter
+from ldndctools.misc.create_data import create_dataset
 from ldndctools.misc.helper import dataset_to_bytes, get_s3_link
 from ldndctools.misc.types import RES
-
-from ldndctools.misc.create_data import create_dataset
 
 if sys.version_info >= (3, 7):
     from importlib import resources
@@ -93,7 +91,7 @@ def main(state=None):
         result = create_dataset(soil, selector, res, progressbar, status_widget)
 
         if result:
-            note.success(f"Processing done!")
+            note.success("Processing done!")
 
             # create byte streams for output in zip file
             xml_bytes, ds = result
