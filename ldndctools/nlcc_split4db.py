@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-import string
 import gzip
 import sys
 
@@ -12,6 +11,7 @@ climate_lines = gzip.open(climate_dbfile, "rt").readlines()
 fileOpen = False
 
 global_header = None
+f = None
 
 for lcnt, cl in enumerate(climate_lines):
 
