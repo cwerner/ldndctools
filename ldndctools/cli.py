@@ -41,7 +41,7 @@ class RangeAction(argparse.Action):
             for e in s:
                 try:
                     _ = int(e)
-                except:
+                except ValueError:
                     return False
             if int(s[1]) < int(s[0]):
                 return False
