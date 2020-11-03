@@ -1,9 +1,10 @@
 """assorted helper functions that currently do not have a dedicate place (yet)"""
+import os
 from functools import wraps
+
+import boto3
 import netCDF4
 import xarray as xr
-import boto3
-import os
 
 
 # from: https://stackoverflow.com/a/54487188/5300574

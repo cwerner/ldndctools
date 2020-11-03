@@ -1,8 +1,8 @@
 import math
-import xml.etree.cElementTree as et
 import xml.dom.minidom as md
+import xml.etree.cElementTree as et
 
-from ldndctools.misc.types import LayerData, NODATA
+from ldndctools.misc.types import NODATA, LayerData
 
 
 def calc_hydraulic_properties(ld: LayerData) -> LayerData:
@@ -40,7 +40,7 @@ def calc_hydraulic_properties(ld: LayerData) -> LayerData:
 
     alpha = math.e ** log_alpha
     vgn = math.e ** log_n
-    vgm = 1.0  # (1.0 - (1.0/ vGn)) disabled as we do not use texture classes but real fractions
+    vgm = 1.0  # (1.0 - (1.0/ vGn)) off as we do not use texture classes but real frac
 
     field_capacity = theta_r + (theta_s - theta_r) / math.pow(
         (1.0 + math.pow(alpha * 100.0, vgn)), vgm

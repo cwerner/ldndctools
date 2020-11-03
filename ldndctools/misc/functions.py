@@ -1,6 +1,6 @@
 import math
-import xml.etree.cElementTree as ET
 import xml.dom.minidom as MD
+import xml.etree.cElementTree as ET
 
 
 def prettify(elem):
@@ -17,7 +17,6 @@ def prettify(elem):
     return "\n".join(str2) + "\n"
 
 
-# -------------------------------- F U N C T I O N S (currently not used) ------------------------------------
 def calcLitter(litterMass, litname):  # mass in t C ha-1
     if litname == "MULL":
         density = 0.2
@@ -30,7 +29,8 @@ def calcLitter(litterMass, litname):  # mass in t C ha-1
         accumulationFactor = 3.5
 
     # explanation:
-    #   (tCha-1) > x2 > tBMha-1 > x0.1 > kgBMm-2 > x0.1 > gBMcm-2 > /density > height_cm > *10 > height_mm
+    #   (tCha-1) > x2 > tBMha-1 > x0.1 > kgBMm-2 > x0.1 > gBMcm-2 >
+    #   /density > height_cm > *10 > height_mm
     # littermass (t C ha-1) * 2 (BM conv) * 0.1 * 0.1 / density * 10
     depth = ((litterMass * accumulationFactor * 2 * 0.1 * 0.1) / density) * 10.0
     numberOfLayers = math.floor(depth / 20.0)

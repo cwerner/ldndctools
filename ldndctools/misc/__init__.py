@@ -1,8 +1,6 @@
 import logging
-from logging.handlers import RotatingFileHandler
-import sys
-
 from logging import NullHandler
+from logging.handlers import RotatingFileHandler
 
 logging.getLogger(__name__).addHandler(NullHandler())
 

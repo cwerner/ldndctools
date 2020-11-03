@@ -1,9 +1,9 @@
+import rioxarray  # noqa
 import xarray as xr
-import rioxarray
 
 from ldndctools.cli.selector import Selector
-from ldndctools.misc.types import RES
 from ldndctools.io.xmlwriter import SiteXmlWriter
+from ldndctools.misc.types import RES
 
 
 def create_dataset(
