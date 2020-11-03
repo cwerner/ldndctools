@@ -1,25 +1,24 @@
-import geopandas as gpd
-from ldndctools.misc.types import BoundingBox
-
-import questionary
-from questionary.prompts.common import Choice, Separator
+import logging
 import sys
 
+import geopandas as gpd
+import questionary
+from questionary.prompts.common import Choice, Separator
 from shapely.geometry import Polygon
 
-import logging
+from ldndctools.misc.types import BoundingBox
 
 logging.getLogger("fiona").setLevel(logging.WARNING)
 
 if sys.version_info >= (3, 7):
-    from importlib import resources
     from dataclasses import dataclass
+    from importlib import resources
 
 else:
-    import importlib_resources as resources
+    import importlib_resources as resources  # noqa
 
     try:
-        from dataclasses import dataclass
+        from dataclasses import dataclass  # noqa
     except ImportError:
         print(
             "Dataclasses required. Install Python >= 3.7 or the dataclasses package"
