@@ -134,8 +134,6 @@ def main():
     soil = catalog.soil(res=res.name).read()
 
     selector = Selector(df)
-    if bbox:
-        selector.set_bbox(bbox)
 
     if args.interactive:
         res = ask_for_resolution(cfg)
@@ -143,6 +141,21 @@ def main():
     else:
         if rcode:
             selector.set_region(rcode)
+
+    if bbox:
+        log.info(f"Setting bounding box to {bbox}")
+        selector.set_bbox(bbox)
+    else:
+        log.info("Adjusting bounding box to selection extent")
+        extent = selector.gdf_mask.bounds.iloc[0]
+
+        new_bbox = BoundingBox(
+            x1=np.floor(extent.minx).astype("int").item(),
+            x2=np.ceil(extent.maxx).astype("int").item(),
+            y1=np.floor(extent.miny).astype("int").item(),
+            y2=np.ceil(extent.maxy).astype("int").item(),
+        )
+        selector.set_bbox(new_bbox)
 
     log.info(selector.selected)
 
