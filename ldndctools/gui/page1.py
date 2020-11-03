@@ -1,28 +1,12 @@
-import streamlit as st
-from ldndctools.gui.utils import Page
-from ldndctools.misc.types import BoundingBox
-
 import folium
 import folium.plugins as plugins
-from streamlit_folium import folium_static
-
-import sys
 import numpy as np
 import pandas as pd
+import streamlit as st
+from streamlit_folium import folium_static
 
-if sys.version_info >= (3, 7):
-    from importlib import resources
-
-else:
-    import importlib_resources as resources
-
-    try:
-        from dataclasses import dataclass
-    except ImportError:
-        print(
-            "Dataclasses required. Install Python >= 3.7 or the datclasses package from"
-            " PyPi"
-        )
+from ldndctools.gui.utils import Page
+from ldndctools.misc.types import BoundingBox
 
 
 def bbox_to_bounds(bbox: BoundingBox):
@@ -89,7 +73,7 @@ def widget_clip(self):
             y2 = a4.number_input("y2", min_value=-90, max_value=90, value=bbox.y2)
             self.state.client_config["bbox"] = BoundingBox(x1=x1, x2=x2, y1=y1, y2=y2)
 
-            file = st.file_uploader("Drop ShapeFile for custom bbox")
+            file = st.file_uploader("Drop ShapeFile for custom bbox")  # noqa
 
         b1, b2 = st.beta_columns(2)
         with b1:

@@ -1,13 +1,12 @@
-from streamlit.report_thread import get_report_ctx
+from abc import ABC, abstractmethod
+from copy import deepcopy
+from typing import Any, Dict
+
 from streamlit.hashing import _CodeHasher
+from streamlit.report_thread import get_report_ctx
 from streamlit.server.server import Server
 
 from ldndctools.misc.types import BoundingBox
-
-from abc import ABC, abstractmethod
-from copy import deepcopy
-
-from typing import Dict, Any
 
 
 class Page(ABC):
@@ -55,7 +54,7 @@ class _SessionState:
         self._state["session"].request_rerun()
 
     def sync(self):
-        """Rerun the app with all state values up to date from the beginning to fix rollbacks."""
+        """Rerun app with all state values up to date from start to fix rollbacks."""
 
         # Ensure to rerun only once to avoid infinite loops
         # caused by a constantly changing state value at each run.
