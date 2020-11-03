@@ -30,10 +30,10 @@ import xarray as xr
 from tqdm import tqdm
 
 from ldndctools.cli.cli import cli
-from ldndctools.cli.selector import Selector
+from ldndctools.cli.selector import Selector, ask_for_resolution
 from ldndctools.extra import get_config, set_config
 from ldndctools.misc.create_data import create_dataset
-from ldndctools.misc.types import RES
+from ldndctools.misc.types import RES, BoundingBox
 
 log = logging.getLogger(__name__)
 
@@ -93,21 +93,24 @@ def main():
     #     SOURCE=_get_cfg_item("project", "source"),
     # )
 
-    cfg["interactive"] = True
-
-    if (args.rcode is not None) or (args.ccode is not None) or (args.file is not None):
+    if (args.rcode is not None) or (args.file is not None):
         log.info("Non-interactive mode...")
         cfg["interactive"] = False
 
     # query environment or command flags for selection (non-interactive mode)
     args.rcode = os.environ.get("DLSC_REGION", args.rcode)
-    args.ccode = os.environ.get("DLSC_COUNTRY", args.ccode)
+    rcode = args.rcode.split("+") if args.rcode else None
 
     if not RES.contains(args.resolution):
         log.error(f"Wrong resolution: {args.resolution}. Use HR, MR or LR.")
         exit(-1)
 
     res = RES[args.resolution]
+
+    bbox = None
+    if args.bbox:
+        x1, y1, x2, y2 = [float(x) for x in args.bbox.split(",")]
+        bbox = BoundingBox(x1=x1, y1=y1, x2=x2, y2=y2)
 
     if not args.outfile:
         cfg["outname"] = f"sites_{res.name}.xml"
@@ -122,20 +125,26 @@ def main():
     log.info(f"Soil resolution: {res.name} {res.value}")
     log.info(f'Outfile name:    {cfg["outname"]}')
 
-    rmap = {RES.LR: 50, RES.MR: 50, RES.HR: 10}
-
-    # # resolution
-    # resolution = ask_for_resolution(cfg)
+    res_scale_mapper = {RES.LR: 50, RES.MR: 50, RES.HR: 10}
 
     with resources.path("data", "catalog.yml") as cat:
         catalog = intake.open_catalog(str(cat))
 
-    df = catalog.admin(res=rmap[res]).read()
+    df = catalog.admin(scale=res_scale_mapper[res]).read()
     soil = catalog.soil(res=res.name).read()
 
-    # region selection
     selector = Selector(df)
-    selector.ask()
+    if bbox:
+        selector.set_bbox(bbox)
+
+    if args.interactive:
+        res = ask_for_resolution(cfg)
+        selector.ask()
+    else:
+        if rcode:
+            selector.set_region(rcode)
+
+    log.info(selector.selected)
 
     with tqdm(total=1) as progressbar:
         result = create_dataset(soil, selector, res, progressbar)

@@ -1,12 +1,13 @@
 import logging
 import sys
+from typing import Iterable
 
 import geopandas as gpd
 import questionary
 from questionary.prompts.common import Choice, Separator
 from shapely.geometry import Polygon
 
-from ldndctools.misc.types import BoundingBox
+from ldndctools.misc.types import RES, BoundingBox
 
 logging.getLogger("fiona").setLevel(logging.WARNING)
 
@@ -66,6 +67,20 @@ def ask_for_region(self):
     selection = list(set(clean_results(selection)))
 
     return self._extract_countries(selection)
+
+
+def ask_for_resolution(cfg):
+    """ask use for a target resolution if not provided via command line"""
+
+    disabled = True if hasattr(cfg, "res") else False
+    return (
+        questionary.select(
+            "Select output resolution:",
+            choices=[Choice(r.value, r) for r in RES.members()],
+        )
+        .skip_if(disabled, default=RES.LR)
+        .ask()
+    )
 
 
 class Selector(object):
@@ -176,6 +191,9 @@ class Selector(object):
 
     def set_bbox(self, bbox: BoundingBox) -> None:
         self._bbox = bbox
+
+    def set_region(self, region: Iterable[str]) -> None:
+        self._selection = self._extract_countries(region)
 
     @property
     def countries(self):
