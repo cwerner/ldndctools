@@ -1,21 +1,17 @@
+import xml.dom.minidom as md
+import xml.etree.cElementTree as et
+from typing import Any, Iterable, Optional, Tuple
+
 import numpy as np
 import xarray as xr
 
-from typing import Iterable, Optional, Tuple, Any
-
-from ldndctools.misc.types import nmap
 from ldndctools.misc.helper import mutually_exclusive
-from ldndctools.misc.types import RES
-
-import xml.dom.minidom as md
-import xml.etree.cElementTree as et
-
+from ldndctools.misc.types import RES, LayerData, nmap
 from ldndctools.misc.xmlclasses import SiteXML
-from ldndctools.misc.types import LayerData
 
 
 def translate_data_format(d: xr.Dataset) -> Iterable[LayerData]:
-    """ translate data from nc soil file (point-wise xarray selection) to new naming and units """
+    """translate data from nc soil file (point-wise xarray sel) to new naming/ units"""
 
     data = []
     ks = nmap.keys()
@@ -92,17 +88,15 @@ class SiteXmlWriter:
         self.ids[:] = ids
         self.ids = self.ids * self.mask
 
-        def create_chunks(l):
+        def create_chunks(items):
             block = 200
-            return [l[i : i + block] for i in range(0, len(l), block)]
+            return [items[item : item + block] for item in range(0, len(items), block)]
 
         Lcids2d = create_chunks(Lcids)
         Lix2d = create_chunks(Lix)
         Ljx2d = create_chunks(Ljx)
 
         sites = []
-        sb_cnt = 1
-        cnt = 0
 
         # NOTE: Possibly some selection missing
         step = 0
@@ -119,7 +113,7 @@ class SiteXmlWriter:
                 d = subset.sel(points=point)
                 lat, lon = float(d.lat), float(d.lon)
 
-                # take point selection and return dict with modified data naming and units
+                # take point sel and return dict with modified data naming/ units
                 data = translate_data_format(d)
 
                 # check for valid layer(s)
