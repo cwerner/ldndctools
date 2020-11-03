@@ -19,19 +19,20 @@ if sys.version_info >= (3, 7):
 else:
     import importlib_resources as resources
 
-import xarray as xr
-import numpy as np
-import pandas as pd
+import datetime
 import logging
-import os, datetime, shutil, string, math
-import progressbar as pb
-from pathlib import Path
+import math
+import os
+import string
 import xml.dom.minidom as MD
 import xml.etree.cElementTree as ET
-import tqdm
+from pathlib import Path
 
 import intake
-from ldndctools import __version__
+import numpy as np
+import pandas as pd
+import progressbar as pb
+import xarray as xr
 
 from .cli import cli
 from .extra import get_config, set_config
@@ -50,14 +51,14 @@ with resources.path("data", "") as dpath:
 
 
 def translateDataFormat(d):
-    """ translate data from nc soil file (pointwise xarray sel) to new naming and units """
+    """translate data from nc soil file (pointwise xarray sel) to new naming/ units"""
     data = []
     ks = nmap.keys()
-    for l in range(len(d.lev)):
+    for lev in range(len(d.lev)):
         od = {}
         for k in ks:
             name, conv, ignore = nmap[k]
-            od[name] = float(d.sel(lev=l + 1)[k]) * conv
+            od[name] = float(d.sel(lev=lev + 1)[k]) * conv
         data.append(od)
     return data
 
@@ -86,8 +87,6 @@ cmap["iron"] = 5
 
 def print_table(seq, columns=2, base=0):
     """ print input selection table """
-    table = ""
-    a = 0
 
     # expand to muliple
     fullSize = int(math.ceil(len(seq) / float(columns))) * columns
@@ -182,8 +181,9 @@ def main():
     df = catalog.admin_lut(variant="full").read()
 
     # eu28 specific
-    eu28 = "BE,DE,FR,IT,LU,NL,DK,IE,GB,GR,PT,ES,FI,AT,SE,EE,LV,LT,MT,PL,SK,SI,CZ,HU,CY,BG,RO,HR".split(
-        ","
+    eu28 = (
+        "BE,DE,FR,IT,LU,NL,DK,IE,GB,GR,PT,ES,FI,AT,SE,"
+        + "EE,LV,LT,MT,PL,SK,SI,CZ,HU,CY,BG,RO,HR".split(",")
     )
 
     df_extra = df[df["ISO2"].isin(eu28)]
@@ -263,32 +263,32 @@ def main():
                     repeat = False
                 else:
                     try:
-                        I = int(it)
-                        if I in range(len(seq1) + len(seq2)):
+                        xxx = int(it)
+                        if xxx in range(len(seq1) + len(seq2)):
                             repeat = False
 
                             # catch specific regions and pass to country selector
-                            if I == range(len(seq1) + len(seq2))[-2]:
+                            if xxx == range(len(seq1) + len(seq2))[-2]:
                                 eu28 = True
-                            elif I == range(len(seq1) + len(seq2))[-1]:
+                            elif xxx == range(len(seq1) + len(seq2))[-1]:
                                 world = True
                             else:
-                                valItems.append(I)
+                                valItems.append(xxx)
                         else:
-                            print(f"Invalid Entry (0...{len(seq1)+len(seq2)-1}) {I}")
+                            print(f"Invalid Entry (0...{len(seq1)+len(seq2)-1}) {xxx}")
 
                     except ValueError:
                         print("Invalid Entry")
 
         # create human-readable selection lists
         selPrint1, selPrint2 = [], []
-        for I in valItems:
-            if I < len(seq1):
-                reg = seq1[I]
+        for xxx in valItems:
+            if xxx < len(seq1):
+                reg = seq1[xxx]
                 UNR.append(Dregions[reg])
                 selPrint1.append(reg)
             else:
-                reg = seq2[I - len(seq1)]
+                reg = seq2[xxx - len(seq1)]
                 UNSR.append(Dsubregions[reg])
                 selPrint1.append(reg)
 
@@ -299,7 +299,7 @@ def main():
             selPrint1.append("WORLD")
 
         # country selection section
-        if showCountries == True:
+        if showCountries:
             print("\nCountries:")
 
             seq3 = sorted(Dcountries.keys())
@@ -329,22 +329,22 @@ def main():
                 valItems = []
                 for it in items:
                     try:
-                        I = int(it)
-                        if I in range(len(seq3)):
+                        xxx = int(it)
+                        if xxx in range(len(seq3)):
                             repeat = False
-                            valItems.append(I)
-                            reg = seq3[I]
+                            valItems.append(xxx)
+                            reg = seq3[xxx]
                             UNC.append(Dcountries[reg])
                             selPrint2.append(reg)
 
                         else:
-                            print("Invalid Entry (0...%d) %d" % (len(seq3) - 1, I))
+                            print("Invalid Entry (0...%d) %d" % (len(seq3) - 1, xxx))
 
                     except ValueError:
                         print("Invalid Entry")
 
         # if eu28 was selected add those ids now
-        if eu28 == True:
+        if eu28:
             UNC += Dextracountries.values()
 
         log.info("----------------------------------")
@@ -421,7 +421,7 @@ def main():
     if world and args.resolution == "HR":
         log.warn("\nWARNING  You selected the entire world in high-res as a domain.")
         log.warn("         This will take a loooooooooong time.\n")
-        x = raw_input("[p] to proceed, anything else to abort")
+        x = input("[p] to proceed, anything else to abort")
 
         if string.lower(x) != "p":
             exit(1)
@@ -458,8 +458,8 @@ def main():
 
     CHUCK = 200
 
-    def create_chunks(l):
-        return [l[i : i + CHUCK] for i in range(0, len(l), CHUCK)]
+    def create_chunks(items):
+        return [items[i : i + CHUCK] for i in range(0, len(items), CHUCK)]
 
     Lcids2d = create_chunks(Lcids)
     Lix2d = create_chunks(Lix)
@@ -538,7 +538,7 @@ def main():
                     else:
                         site.addSoilLayer(data2[lay], litter=False, accuracy=cmap)
 
-            if addFlag == True:
+            if addFlag:
                 sites.append(site)
 
             bar.update(cnt)
@@ -585,7 +585,7 @@ def main():
         elif args.bboxoff:
             log.debug("netcdf without bounding box")
         else:
-            log.debug(f"netcdf with auto bounding box")
+            log.debug("netcdf with auto bounding box")
 
             # find a suitable bbox from mask
             def find_bbox(mask):

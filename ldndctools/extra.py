@@ -3,14 +3,11 @@
 
 import logging
 import os
-from pkg_resources import Requirement, resource_filename
 import shutil
-import string
-
-import numpy as np
 
 # import param
 import yaml
+from pkg_resources import Requirement, resource_filename
 
 log = logging.getLogger(__name__)
 
@@ -83,10 +80,9 @@ def get_config(cfgFile=None):
     """ locate and read config file """
 
     cfg = None
-    locations = []
 
     def cfgfile_exists(cfgFile):
-        return cfgFile != None
+        return cfgFile is not None
 
     if cfgfile_exists(cfgFile):
         if not os.path.isfile(cfgFile):
