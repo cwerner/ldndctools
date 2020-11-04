@@ -21,17 +21,19 @@ else:
 
 import logging
 import os
+from dataclasses import dataclass
 from pathlib import Path
+from typing import Iterable, Optional, Union
 
 import intake
 import numpy as np
 import pandas as pd
 import xarray as xr
+from omegaconf import OmegaConf
 from tqdm import tqdm
 
 from ldndctools.cli.cli import cli
 from ldndctools.cli.selector import Selector, ask_for_resolution
-from ldndctools.extra import get_config, set_config
 from ldndctools.misc.create_data import create_dataset
 from ldndctools.misc.types import RES, BoundingBox
 
@@ -45,6 +47,24 @@ NODATA = "-99.99"
 #       also, tqdm takes no effect
 with resources.path("data", "") as dpath:
     DPATH = Path(dpath)
+
+
+def find_config(cli_config_path: Optional[Union[Path, str]]) -> Optional[Path]:
+    """look for config file in default locations"""
+    locations = [
+        Path(cli_config_path) if cli_config_path else None,
+        os.environ.get("LDNDCTOOLS_CONF"),
+        Path.cwd(),
+        Path.home(),
+        "/etc/ldndctools",
+    ]
+    locations = [x for x in locations if x]
+
+    for loc in locations:
+        f = loc / "ldndctools.conf"
+        if f.is_file():
+            return f
+    return None
 
 
 def find_nearest(a, a0):
@@ -73,57 +93,67 @@ def main():
     # parse args
     args = cli()
 
-    # read config
-    cfg = get_config(args.config)
+    # read config from cli - otherwise use default from package
+    cfg_filename = find_config(args.config)
+    file_cfg = OmegaConf.load(cfg_filename)
 
-    # write config
-    if args.storeconfig:
-        set_config(cfg)
+    log.info(OmegaConf.to_yaml(file_cfg))
 
-    def _get_cfg_item(group, item, save="na"):
-        return cfg[group].get(item, save)
+    # run config (possibly from yaml or cli)
 
-    # TODO: move this to file
-    # BASEINFO = dict(
-    #     AUTHOR=_get_cfg_item("info", "author"),
-    #     EMAIL=_get_cfg_item("info", "email"),
-    #     DATE=str(datetime.datetime.now()),
-    #     DATASET=_get_cfg_item("project", "dataset"),
-    #     VERSION=_get_cfg_item("project", "version", save="0.1"),
-    #     SOURCE=_get_cfg_item("project", "source"),
-    # )
+    @dataclass
+    class RunConfig:
+        bbox: Iterable[float] = (-180, -90, 180, 90)
+        extrasplit: bool = False
+        interactive: bool = False
+        resolution: str = "HR"
+        outfile: str = "sites.xml"
+        rcode: Iterable[str] = ()
+        verbose: bool = False
 
-    if (args.rcode is not None) or (args.file is not None):
-        log.info("Non-interactive mode...")
-        cfg["interactive"] = False
+    cli_cfg = OmegaConf.structured(RunConfig)
+
+    # overwrite defaults with cli args
+    cli_cfg.interactive = args.interactive
+    cli_cfg.extrasplit = args.extrasplit
+    cli_cfg.resolution = args.resolution
+    cli_cfg.verbose = args.verbose
+
+    # ... and optional args
+    if args.bbox:
+        log.info(args.bbox)
+        cli_cfg.bbox = [float(x) for x in args.bbox.split(",")]
+    if args.outfile:
+        cli_cfg.outfile = args.outfile
+    if args.rcode:
+        cli_cfg.rcode = args.rcode.split("+")
+
+    # merge configs
+    cfg = OmegaConf.merge(file_cfg, cli_cfg)
+    log.info(OmegaConf.to_yaml(cfg))
 
     # query environment or command flags for selection (non-interactive mode)
-    args.rcode = os.environ.get("DLSC_REGION", args.rcode)
-    rcode = args.rcode.split("+") if args.rcode else None
+    rcode = cfg.rcode if len(cfg.rcode) > 0 else None
 
-    if not RES.contains(args.resolution):
-        log.error(f"Wrong resolution: {args.resolution}. Use HR, MR or LR.")
+    if not RES.contains(cfg.resolution):
+        log.error(f"Wrong resolution: {cfg.resolution}. Use HR, MR or LR.")
         exit(-1)
 
-    res = RES[args.resolution]
+    res = RES[cfg.resolution]
+    x1, y1, x2, y2 = cfg.bbox
+    bbox = BoundingBox(x1=x1, y1=y1, x2=x2, y2=y2)
 
-    bbox = None
-    if args.bbox:
-        x1, y1, x2, y2 = [float(x) for x in args.bbox.split(",")]
-        bbox = BoundingBox(x1=x1, y1=y1, x2=x2, y2=y2)
-
-    if not args.outfile:
-        cfg["outname"] = f"sites_{res.name}.xml"
-    else:
-        cfg["outname"] = args.outfile
-        if all([x.value not in cfg["outname"] for x in RES.members()]):
-            if cfg["outname"].endswith(".xml"):
-                cfg["outname"] = f'{cfg["outname"][:-4]}_{res.name}.xml'
-            else:
-                cfg["outname"] = f'{cfg["outname"]}_{res.name}.xml'
+    # validate outfile naming convention...
+    # TODO: refactor this out
+    if all([x.name not in cfg.outfile for x in RES.members()]):
+        log.info([x.name for x in RES.members()])
+        if cfg.outfile.endswith(".xml"):
+            cfg.outfile = f"{cfg.outfile[:-4]}_{res.name}.xml"
+        else:
+            cfg.outfile = f"{cfg.outfile}_{res.name}.xml"
 
     log.info(f"Soil resolution: {res.name} {res.value}")
-    log.info(f'Outfile name:    {cfg["outname"]}')
+    log.info(f"Outfile name:    {cfg.outfile}")
 
     res_scale_mapper = {RES.LR: 50, RES.MR: 50, RES.HR: 10}
 
@@ -135,8 +165,8 @@ def main():
 
     selector = Selector(df)
 
-    if args.interactive:
-        res = ask_for_resolution(cfg)
+    if cfg.interactive:
+        res = ask_for_resolution()
         selector.ask()
     else:
         if rcode:
@@ -164,8 +194,8 @@ def main():
 
     xml, nc = result
 
-    open(cfg["outname"], "w").write(xml)
-    nc.to_netcdf(cfg["outname"].replace(".xml", ".nc"))
+    open(cfg.outfile, "w").write(xml)
+    nc.to_netcdf(cfg.outfile.replace(".xml", ".nc"))
 
 
 if __name__ == "__main__":
