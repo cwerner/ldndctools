@@ -161,14 +161,6 @@ def cli():
     )
 
     parser.add_argument(
-        "-S",
-        dest="storeconfig",
-        action="store_true",
-        default=False,
-        help="make passed config (-c) the new default",
-    )
-
-    parser.add_argument(
         "-v",
         dest="verbose",
         action=VerbosityAction,
@@ -182,9 +174,5 @@ def cli():
 
     log.debug("-" * 50)
     log.debug("ldndctools::dlsc called at: %s" % dt.datetime.now())
-
-    if args.storeconfig and (args.config is None):
-        log.critical("Option -S requires that you pass a file with -c.")
-        exit(1)
 
     return args
