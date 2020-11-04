@@ -69,18 +69,13 @@ def ask_for_region(self):
     return self._extract_countries(selection)
 
 
-def ask_for_resolution(cfg):
+def ask_for_resolution():
     """ask use for a target resolution if not provided via command line"""
 
-    disabled = True if hasattr(cfg, "res") else False
-    return (
-        questionary.select(
-            "Select output resolution:",
-            choices=[Choice(r.value, r) for r in RES.members()],
-        )
-        .skip_if(disabled, default=RES.LR)
-        .ask()
-    )
+    return questionary.select(
+        "Select output resolution:",
+        choices=[Choice(r.value, r) for r in RES.members()],
+    ).ask()
 
 
 class Selector(object):
