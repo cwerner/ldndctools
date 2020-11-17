@@ -27,4 +27,4 @@ In addition to the traditional CLI, `ldndctools` now also features a graphical u
 streamlit run app.py
 ```
 
-!["Animation"](./assets/ldndc_screen.gif =500px)
+<img src="./assets/ldndc_screen.gif" width="500" />
