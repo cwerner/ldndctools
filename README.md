@@ -17,3 +17,14 @@ soil data (ISRIC-WISE, NL) are included.
 [Christian Werner](mailto:christian.werner@kit.edu)
 IMK-IFU, Karlsruhe Institute of Technology
 2019/10/13
+
+
+## GUI
+
+In addition to the traditional CLI, `ldndctools` now also features a graphical user interface to select and process LandscapeDNDC input! The tools builds on `steamlit` and can (currently) be started via:
+
+```
+streamlit run app.py
+```
+
+!["Animation"](./assets/ldndc_screen.gif)
