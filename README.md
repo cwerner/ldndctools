@@ -21,10 +21,10 @@ IMK-IFU, Karlsruhe Institute of Technology
 
 ## GUI
 
-In addition to the traditional CLI, `ldndctools` now also features a graphical user interface to select and process LandscapeDNDC input! The tools builds on `steamlit` and can (currently) be started via:
+In addition to the traditional CLI, `ldndctools` now also features a graphical user interface to select and process LandscapeDNDC input! The tool builds on [`steamlit`](https://www.streamlit.io) and can (currently) be started via:
 
 ```
 streamlit run app.py
 ```
 
-<img src="./assets/ldndc_screen.gif" width="500" />
+<img src="./assets/ldndc_screen.gif" width="640" />
