@@ -1,7 +1,7 @@
 boto3
-git+git://github.com/geopandas/geopandas@master#egg=geopandas
+geopandas
 intake
-git+git://github.com/intake/intake-geopandas@master#egg=intake-geopandas
+intake-geopandas
 intake-xarray
 netcdf4
 numpy
