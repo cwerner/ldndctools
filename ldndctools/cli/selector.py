@@ -3,6 +3,7 @@ import sys
 from typing import Iterable
 
 import geopandas as gpd
+import pandas as pd
 import questionary
 from questionary.prompts.common import Choice, Separator
 from shapely.geometry import Polygon
@@ -228,3 +229,18 @@ class Selector(object):
 
     def ask(self):
         self._selection = ask_for_region(self)
+
+
+class CoordinateSelection:
+    def __init__(self, infile, lon_col="lon", lat_col="lat", id_col="ID"):
+        df = pd.read_csv(infile, delim_whitespace=True)
+
+        self.lons = df[lon_col].values
+        self.lats = df[lat_col].values
+        self.ids = (
+            df[id_col].values if id_col in list(df.columns) else range(len(self.lats))
+        )
+
+    @property
+    def selected(self):
+        return dict({k: (v1, v2) for v1, v2, k in zip(self.lons, self.lats, self.ids)})

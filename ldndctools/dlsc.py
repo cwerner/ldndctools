@@ -25,12 +25,10 @@ from pathlib import Path
 
 import intake
 import numpy as np
-import pandas as pd
-import xarray as xr
 from tqdm import tqdm
 
 from ldndctools.cli.cli import cli
-from ldndctools.cli.selector import Selector, ask_for_resolution
+from ldndctools.cli.selector import CoordinateSelection, Selector, ask_for_resolution
 from ldndctools.extra import get_config, set_config
 from ldndctools.misc.create_data import create_dataset
 from ldndctools.misc.types import RES, BoundingBox
@@ -45,28 +43,6 @@ NODATA = "-99.99"
 #       also, tqdm takes no effect
 with resources.path("data", "") as dpath:
     DPATH = Path(dpath)
-
-
-def find_nearest(a, a0):
-    """find nearest lat or lon value from coord"""
-    return a.flat[np.abs(a - a0).argmin()]
-
-
-def createMask_fromfile(ds, infile):
-    df = pd.read_csv(infile, delim_whitespace=True)
-    ds_x = xr.zeros_like(ds)
-    ds_id = xr.ones_like(ds, dtype="int") * np.nan if "ID" in df.columns else None
-
-    for _, r in df.iterrows():
-        _lon = find_nearest(ds.lon.values, r.lon)
-        _lat = find_nearest(ds.lat.values, r.lat)
-        ds_x.loc[dict(lon=_lon, lat=_lat)] = 1
-        if "ID" in df.columns:
-            ds_id.loc[dict(lon=_lon, lat=_lat)] = r.ID
-    ds_x = ds_x.values
-    if "ID" in df.columns:
-        ds_id = ds_id.values
-    return ds_x, ds_id
 
 
 def main():
@@ -133,7 +109,10 @@ def main():
     df = catalog.admin(scale=res_scale_mapper[res]).read()
     soil = catalog.soil(res=res.name).read()
 
-    selector = Selector(df)
+    if args.file:
+        selector = CoordinateSelection(args.file)
+    else:
+        selector = Selector(df)
 
     if args.interactive:
         res = ask_for_resolution(cfg)
@@ -146,16 +125,17 @@ def main():
         log.info(f"Setting bounding box to {bbox}")
         selector.set_bbox(bbox)
     else:
-        log.info("Adjusting bounding box to selection extent")
-        extent = selector.gdf_mask.bounds.iloc[0]
+        if isinstance(selector, Selector):
+            log.info("Adjusting bounding box to selection extent")
+            extent = selector.gdf_mask.bounds.iloc[0]
 
-        new_bbox = BoundingBox(
-            x1=np.floor(extent.minx).astype("int").item(),
-            x2=np.ceil(extent.maxx).astype("int").item(),
-            y1=np.floor(extent.miny).astype("int").item(),
-            y2=np.ceil(extent.maxy).astype("int").item(),
-        )
-        selector.set_bbox(new_bbox)
+            new_bbox = BoundingBox(
+                x1=np.floor(extent.minx).astype("int").item(),
+                x2=np.ceil(extent.maxx).astype("int").item(),
+                y1=np.floor(extent.miny).astype("int").item(),
+                y2=np.ceil(extent.maxy).astype("int").item(),
+            )
+            selector.set_bbox(new_bbox)
 
     log.info(selector.selected)
 
