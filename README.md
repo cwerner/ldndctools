@@ -17,3 +17,5 @@ soil data (ISRIC-WISE, NL) are included.
 [Christian Werner](mailto:christian.werner@kit.edu)
 IMK-IFU, Karlsruhe Institute of Technology
 2019/10/13
+
+![image info](./assets/screenshot_gui.png )
