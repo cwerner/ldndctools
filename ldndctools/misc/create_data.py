@@ -26,19 +26,21 @@ def create_dataset(
         site_xml = xmlwriter.write(progressbar=progressbar, status_widget=status_widget)
 
     else:
-        # TODO: this should be possible to achieve in a cleaner way!
-        soil_orig = soil.sel(lat=selector.lats, lon=selector.lons, method="nearest")
-        selected_lats = xr.DataArray(selector.lats, dims="points")
-        selected_lons = xr.DataArray(selector.lons, dims="points")
-        soil_pointwise = soil_orig.sel(
-            lat=selected_lats, lon=selected_lons, method="nearest"
+        soil = soil.rio.clip_box(
+            minx=min(selector.lons),
+            miny=min(selector.lats),
+            maxx=max(selector.lons),
+            maxy=max(selector.lats),
         )
 
-        soil_new = xr.ones_like(soil_orig) * np.nan
-        for p in soil_pointwise.points:
-            s = soil_pointwise.sel(points=p)
-            for v in soil_pointwise.data_vars:
-                soil_new[v].loc[dict(lat=s.lat, lon=s.lon)] = s[v]
+        results = []
+        for lat, lon in zip(selector.lats, selector.lons):
+            results.append(soil.sel(lat=lat, lon=lon, method="nearest"))
+
+        soil_new = xr.ones_like(soil) * np.nan
+        for p in results:
+            for v in soil.data_vars:
+                soil_new[v].loc[dict(lat=p.lat, lon=p.lon)] = p[v]
 
         xmlwriter = SiteXmlWriter(soil_new, res=res)
         site_xml = xmlwriter.write(
