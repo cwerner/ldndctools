@@ -126,6 +126,9 @@ class SiteXmlWriter:
                     for i in range(5):
                         lay = data[i]
 
+                        if lay.ph < 0:
+                            break
+
                         if lay.topd >= 0.0:
                             lay.depth = (lay.botd - lay.topd) * 10
                         if i in [0, 1]:
