@@ -1,5 +1,5 @@
 import io
-import sys
+from importlib import resources
 
 import intake
 import pandas as pd
@@ -12,9 +12,6 @@ from ldndctools.io.zipwriter import ZipWriter
 from ldndctools.misc.create_data import create_dataset
 from ldndctools.misc.helper import dataset_to_bytes, get_s3_link
 from ldndctools.misc.types import RES
-
-if sys.version_info >= (3, 7):
-    from importlib import resources
 
 
 def widget_resolution():
