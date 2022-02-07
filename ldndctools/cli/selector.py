@@ -1,5 +1,4 @@
 import logging
-import sys
 from typing import Iterable
 
 import geopandas as gpd
@@ -11,21 +10,6 @@ from shapely.geometry import Polygon
 from ldndctools.misc.types import RES, BoundingBox
 
 logging.getLogger("fiona").setLevel(logging.WARNING)
-
-if sys.version_info >= (3, 7):
-    from dataclasses import dataclass
-    from importlib import resources
-
-else:
-    import importlib_resources as resources  # noqa
-
-    try:
-        from dataclasses import dataclass  # noqa
-    except ImportError:
-        print(
-            "Dataclasses required. Install Python >= 3.7 or the dataclasses package"
-            " from PyPi"
-        )
 
 
 def clean_results(x):
