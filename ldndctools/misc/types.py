@@ -81,7 +81,7 @@ class LayerData:
         out = {}
         for field, field_type in self.__annotations__.items():
             value = getattr(self, field)
-            if field == NODATA:
+            if value == NODATA:
                 out[field] = f"{value:.2f}"
             elif isinstance(field_type, int):
                 out[field] = str(value)
