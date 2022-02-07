@@ -37,7 +37,7 @@ class SiteXmlWriter:
 
     @property
     def number_of_sites(self) -> int:
-        return int(self.soil.PROP1.sel(lev=1).count().item())
+        return self.mask.sum().item()
 
     @property
     def arrays(self) -> xr.Dataset:
