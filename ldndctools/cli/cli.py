@@ -9,6 +9,7 @@
 import argparse
 import datetime as dt
 import logging
+import sys
 
 from ldndctools import __version__
 
@@ -126,6 +127,14 @@ def cli():
     )
 
     parser.add_argument(
+        "--gui",
+        action="store_true",
+        dest="gui",
+        default=False,
+        help="start the web-GUI",
+    )
+
+    parser.add_argument(
         "-f",
         "--file",
         dest="file",
@@ -186,5 +195,15 @@ def cli():
     if args.storeconfig and (args.config is None):
         log.critical("Option -S requires that you pass a file with -c.")
         exit(1)
+
+    if args.gui:
+        try:
+            from streamlit import cli as stcli
+
+            sys.argv = ["streamlit", "run", "dlsc-gui.py"]
+            sys.exit(stcli.main())
+        except ModuleNotFoundError:
+            print("Module 'Streamlit' is not installed. GUI not available")
+            sys.exit(1)
 
     return args
