@@ -7,7 +7,6 @@ import streamlit as st
 from ldndctools.cli.selector import Selector
 from ldndctools.gui.download_button import download_button
 from ldndctools.gui.page1 import Page1
-from ldndctools.gui.utils import provide_state
 from ldndctools.io.zipwriter import ZipWriter
 from ldndctools.misc.create_data import create_dataset
 from ldndctools.misc.helper import dataset_to_bytes, get_s3_link
@@ -28,12 +27,10 @@ def widget_resolution():
 def widget_process(state=None):
     st.sidebar.subheader("④ Process dataset")
 
-    file_name = st.sidebar.text_input(
-        "File name", value=state.client_config["file_name"]
-    )
-    state.client_config["file_name"] = file_name
+    file_name = st.sidebar.text_input("File name", value=state["file_name"])
+    state["file_name"] = file_name
 
-    b_start, b_stop, _, notify = st.sidebar.beta_columns([3, 3, 1, 6])
+    b_start, b_stop, _, notify = st.sidebar.columns([3, 3, 1, 6])
 
     with b_start:
         start = st.button("🏁 Start")
@@ -45,20 +42,8 @@ def widget_process(state=None):
     return start, stop, notify, note, file_name
 
 
-@provide_state()
-def main(state=None):
-
-    # def _get_cfg_item(group, item, save="na"):
-    #     return cfg[group].get(item, save)
-    #
-    # BASEINFO = dict(
-    #     AUTHOR=_get_cfg_item("info", "author"),
-    #     EMAIL=_get_cfg_item("info", "email"),
-    #     DATE=str(datetime.datetime.now()),
-    #     DATASET=_get_cfg_item("project", "dataset"),
-    #     VERSION=_get_cfg_item("project", "version", save="0.1"),
-    #     SOURCE=_get_cfg_item("project", "source"),
-    # )
+# @provide_state()
+def main():
 
     res = widget_resolution()
 
@@ -72,8 +57,8 @@ def main(state=None):
     selector = Selector(df)
 
     # build gui
-    Page1(state=state, selector=selector).write()
-    start, stop, notify, note, file_name = widget_process(state)
+    Page1(state=st.session_state, selector=selector).write()
+    start, stop, notify, note, file_name = widget_process(st.session_state)
 
     with notify:
         status_widget = st.empty()
