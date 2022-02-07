@@ -51,7 +51,7 @@ def ask_for_region(self):
 
     selection = list(set(clean_results(selection)))
 
-    return self._extract_countries(selection)
+    return self.extract_countries(selection)
 
 
 def ask_for_resolution(cfg):
@@ -82,7 +82,7 @@ class Selector(object):
         self._bbox = BoundingBox()
         self._names = sorted(self._df.ADM0_A3.unique())
 
-    def _extract_countries(self, selection):
+    def extract_countries(self, selection):
         # merge countries of (potentially) multiple regions
         countries = {}
         for sel in selection:
@@ -178,7 +178,7 @@ class Selector(object):
         self._bbox = bbox
 
     def set_region(self, region: Iterable[str]) -> None:
-        self._selection = self._extract_countries(region)
+        self._selection = self.extract_countries(region)
 
     @property
     def countries(self):

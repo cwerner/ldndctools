@@ -2,6 +2,7 @@ import io
 import sys
 
 import intake
+import pandas as pd
 import streamlit as st
 
 from ldndctools.cli.selector import Selector
@@ -42,18 +43,29 @@ def widget_process(state=None):
     return start, stop, notify, note, file_name
 
 
-# @provide_state()
-def main():
+def load_catalog():
+    with resources.path("data", "catalog.yml") as cat:
+        catalog = intake.open_catalog(str(cat))
+    return catalog
 
-    res = widget_resolution()
+
+def load_admin_data(catalog, res: RES) -> pd.DataFrame:
 
     # 110m is pretty poor - LR also gets 50m
     res_scale_mapper = {RES.LR: 50, RES.MR: 50, RES.HR: 10}
 
-    with resources.path("data", "catalog.yml") as cat:
-        catalog = intake.open_catalog(str(cat))
-
     df = catalog.admin(scale=res_scale_mapper[res]).read()
+    return df
+
+
+def main():
+
+    res = widget_resolution()
+
+    catalog = load_catalog()
+
+    df = load_admin_data(catalog, res)
+
     selector = Selector(df)
 
     # build gui
