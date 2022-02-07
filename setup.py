@@ -26,7 +26,7 @@ CLASSIFIERS = [
     "Topic :: Scientific/Engineering",
 ]
 
-PYTHON_REQUIRES = ">=3.6"
+PYTHON_REQUIRES = ">=3.7"
 
 here = path.abspath(path.dirname(__file__))
 
@@ -60,7 +60,6 @@ setup(
     entry_points={
         "console_scripts": [
             "dlsc=ldndctools.dlsc:main",
-            "dlsc-gui=ldndctools.dlsc-gui:main",
             "nlcc=ldndctools.nlcc:main",
             "nlcc_split4db=ldndctools.nlcc_split4db:main",
         ]

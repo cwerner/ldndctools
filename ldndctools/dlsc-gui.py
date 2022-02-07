@@ -45,18 +45,6 @@ def widget_process(state=None):
 # @provide_state()
 def main():
 
-    # def _get_cfg_item(group, item, save="na"):
-    #     return cfg[group].get(item, save)
-    #
-    # BASEINFO = dict(
-    #     AUTHOR=_get_cfg_item("info", "author"),
-    #     EMAIL=_get_cfg_item("info", "email"),
-    #     DATE=str(datetime.datetime.now()),
-    #     DATASET=_get_cfg_item("project", "dataset"),
-    #     VERSION=_get_cfg_item("project", "version", save="0.1"),
-    #     SOURCE=_get_cfg_item("project", "source"),
-    # )
-
     res = widget_resolution()
 
     # 110m is pretty poor - LR also gets 50m

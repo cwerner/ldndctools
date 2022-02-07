@@ -10,6 +10,7 @@ import argparse
 import datetime as dt
 import logging
 import sys
+from pathlib import Path
 
 from ldndctools import __version__
 
@@ -200,7 +201,8 @@ def cli():
         try:
             from streamlit import cli as stcli
 
-            sys.argv = ["streamlit", "run", "dlsc-gui.py"]
+            file_path = str(Path(__file__).parent / ".." / "dlsc-gui.py")
+            sys.argv = ["streamlit", "run", file_path]
             sys.exit(stcli.main())
         except ModuleNotFoundError:
             print("Module 'Streamlit' is not installed. GUI not available")
