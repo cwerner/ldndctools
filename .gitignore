@@ -2,4 +2,5 @@
 .DS_Store
 *.pyc
 .ipynb_checkpoints
+.envrc
 .vscode

@@ -1,16 +1,22 @@
-boto3
-geopandas
-intake
-intake-geopandas
-intake-xarray
-netcdf4
-numpy
-pandas
-pyyaml
-questionary
-rioxarray
-s3fs
-streamlit
-streamlit-folium
-tqdm
-xarray
+aiohttp >= 3.8.1
+boto3 >= 1.20.49
+#cython >= 0.29.22
+#cytoolz >= 0.11.2
+fiona >= 2.0dev0 # git+https://github.com/Toblerity/Fiona.git  # required for 3.10 compat
+geopandas >= 0.10.2
+intake >= 0.6.5
+intake-geopandas >= 0.4.0
+intake-xarray >= 0.5.0
+netcdf4 >= 1.5.8
+numpy >= 1.22.2
+pandas >= 1.4.0
+pygeos >= 0.12.0
+questionary >= 1.10.0
+rasterio >= rasterio-1.3a3   # git+https://github.com/rasterio/rasterio.git
+rioxarray >= 0.9.1
+s3fs >= 0.4.2
+streamlit >= 1.5.0
+streamlit-folium >= 0.4.0
+tqdm >= 4.62.3
+watchdog >= 2.1.6
+xarray >= 0.21.1
