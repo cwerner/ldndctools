@@ -5,7 +5,7 @@ import pandas as pd
 import streamlit as st
 from streamlit_folium import folium_static
 
-from ldndctools.gui.utils import Page
+from ldndctools.gui.utils import CONFIG_DEFAULTS, Page
 from ldndctools.misc.types import BoundingBox
 
 
@@ -24,23 +24,23 @@ def widget_area(self):
     sel_region = st.sidebar.multiselect(
         "By region",
         list(self.selector.regions.keys()),
-        default=self.state.client_config["regions"],
+        default=self.state["regions"],
     )
-    self.state.client_config["regions"] = sel_region
+    self.state["regions"] = sel_region
 
     sel_countries = st.sidebar.multiselect(
         "And/ or by country",
         list(self.selector.countries.keys()),
-        default=self.state.client_config["countries"],
+        default=self.state["countries"],
     )
-    self.state.client_config["countries"] = sel_countries
+    self.state["countries"] = sel_countries
 
     selection = sel_region + sel_countries
     if len(selection) > 0:
         self.selector._selection = self.selector._extract_countries(selection)
 
     with st.sidebar:
-        cheatbox = st.beta_expander("Show country codes")
+        cheatbox = st.expander("Show country codes")
         with cheatbox:
             # hack to left align dataframe columns
             st.markdown(
@@ -60,22 +60,22 @@ def widget_clip(self):
     st.sidebar.subheader("③ Clip Extent")
 
     with st.sidebar:
-        bbox_widget = st.beta_expander("📦 Bounding Box or 💾 ShapeFile", expanded=False)
+        bbox_widget = st.expander("📦 Bounding Box or 💾 ShapeFile", expanded=False)
         with bbox_widget:
-            bbox = self.state.client_config["bbox"]
+            bbox = self.state["bbox"]
 
-            a1, a2 = st.beta_columns(2)
-            a3, a4 = st.beta_columns(2)
+            a1, a2 = st.columns(2)
+            a3, a4 = st.columns(2)
 
             x1 = a1.number_input("x1", min_value=-180, max_value=180, value=bbox.x1)
             x2 = a2.number_input("x2", min_value=-180, max_value=180, value=bbox.x2)
             y1 = a3.number_input("y1", min_value=-90, max_value=90, value=bbox.y1)
             y2 = a4.number_input("y2", min_value=-90, max_value=90, value=bbox.y2)
-            self.state.client_config["bbox"] = BoundingBox(x1=x1, x2=x2, y1=y1, y2=y2)
+            self.state["bbox"] = BoundingBox(x1=x1, x2=x2, y1=y1, y2=y2)
 
             file = st.file_uploader("Drop ShapeFile for custom bbox")  # noqa
 
-        b1, b2 = st.beta_columns(2)
+        b1, b2 = st.columns(2)
         with b1:
             shrink = st.button("Shrink to extent")
         with b2:
@@ -89,18 +89,18 @@ def widget_clip(self):
             y1=np.floor(extent.miny).astype("int").item(),
             y2=np.ceil(extent.maxy).astype("int").item(),
         )
-        self.state.client_config["bbox"] = new_bbox
+        self.state["bbox"] = new_bbox
 
     if reset:
-        self.state.client_config["bbox"] = BoundingBox(x1=-180, x2=180, y1=-90, y2=90)
+        self.state["bbox"] = BoundingBox(x1=-180, x2=180, y1=-90, y2=90)
 
 
 def widget_main(self):
-    my_map = create_map(self.selector.gdf_mask, bbox=self.state.client_config["bbox"])
-    my_map.fit_bounds(bbox_to_bounds(self.state.client_config["bbox"]))
+    my_map = create_map(self.selector.gdf_mask, bbox=self.state["bbox"])
+    my_map.fit_bounds(bbox_to_bounds(self.state["bbox"]))
     folium_static(my_map)
 
-    selection_widget = st.beta_expander("Currently selected countries", expanded=False)
+    selection_widget = st.expander("Currently selected countries", expanded=False)
 
     with selection_widget:
         st.info(f"{', '.join(sorted(list(self.selector.selected.keys())))}")
@@ -151,6 +151,9 @@ class Page1(Page):
     def __init__(self, state, selector):
         self.state = state
         self.selector = selector
+
+        for k, v in CONFIG_DEFAULTS.items():
+            self.state[k] = v
 
     def write(self):
 
