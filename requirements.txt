@@ -1,3 +1,4 @@
+aiohttp >= 3.8.1
 boto3 >= 1.20.49
 #cython >= 0.29.22
 #cytoolz >= 0.11.2
