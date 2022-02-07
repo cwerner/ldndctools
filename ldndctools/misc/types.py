@@ -1,13 +1,6 @@
+from dataclasses import dataclass
 from enum import Enum
 from typing import Dict, Iterable, Optional
-
-try:
-    from dataclasses import dataclass
-except ImportError:
-    print(
-        "Dataclasses required. Install Python >= 3.7 or the dataclasses package from"
-        " PyPi"
-    )
 
 
 class BetterEnum(Enum):
