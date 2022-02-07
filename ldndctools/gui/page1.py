@@ -37,7 +37,7 @@ def widget_area(self):
 
     selection = sel_region + sel_countries
     if len(selection) > 0:
-        self.selector._selection = self.selector._extract_countries(selection)
+        self.selector.set_region(selection)
 
     with st.sidebar:
         cheatbox = st.expander("Show country codes")
