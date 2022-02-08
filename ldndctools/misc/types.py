@@ -1,13 +1,10 @@
+import json
 from enum import Enum
-from typing import Dict, Iterable, Optional
+from typing import Optional
 
-try:
-    from dataclasses import dataclass
-except ImportError:
-    print(
-        "Dataclasses required. Install Python >= 3.7 or the dataclasses package from"
-        " PyPi"
-    )
+from pydantic import BaseModel, confloat, conint, root_validator, ValidationError
+from pydantic.dataclasses import dataclass
+from pydantic.json import pydantic_encoder
 
 
 class BetterEnum(Enum):
@@ -32,12 +29,30 @@ class RES(BetterEnum):
     HR = "High-res [0.083°]"
 
 
-@dataclass
+class ValidationConfig:
+    validate_assignment = True
+
+
+@dataclass(config=ValidationConfig)
 class BoundingBox:
-    x1: float = -180
-    x2: float = 180
-    y1: float = -90
-    y2: float = 90
+    x1: conint(ge=-180, le=180) = -180
+    x2: conint(ge=-180, le=180) = 180
+    y1: conint(ge=-90, le=90) = -90
+    y2: conint(ge=-90, le=90) = 90
+
+    @root_validator
+    def check_x1_smaller_x2(cls, values):
+        x1, x2 = values.get("x1"), values.get("x2")
+        if x1 >= x2:
+            raise ValidationError("x1 must be smaller x2")
+        return values
+
+    @root_validator
+    def check_y1_smaller_y2(cls, values):
+        y1, y2 = values.get("y1"), values.get("y2")
+        if y1 >= y2:
+            raise ValidationError("y1 must be smaller y2")
+        return values
 
 
 NODATA = -99.99
@@ -59,44 +74,76 @@ nmap = {
 }
 
 
-@dataclass
-class LayerData:
-    depth: int = -1
-    split: int = -1
-    ph: float = NODATA
-    scel: float = NODATA
-    bd: float = NODATA
-    sks: float = NODATA
-    norg: float = NODATA
-    corg: float = NODATA
-    clay: float = NODATA
-    wcmin: float = NODATA
-    wcmax: float = NODATA
-    sand: float = NODATA
-    silt: float = NODATA
-    iron: float = NODATA
+class LayerData(BaseModel):
+    depth: conint(gt=0) = 10  # mm  -1
+    split: conint(ge=0) = 0  # int = -1
+    ph: Optional[confloat(ge=2.5, le=10.0)] = None
+    scel: Optional[
+        confloat(ge=0.0, lt=1.0)
+    ] = None  # TODO: check that range 0...100 is correct
+    bd: Optional[confloat(ge=0.3, le=2.65)] = None
+    sks: Optional[confloat(ge=0.0)] = None
+    norg: Optional[confloat(gt=0.0)] = None
+    corg: Optional[confloat(gt=0.0)] = None
+    clay: Optional[confloat(ge=0.0, lt=1.0)] = None
+    sand: Optional[confloat(ge=0.0, lt=1.0)] = None
+    silt: Optional[confloat(ge=0.0, lt=1.0)] = None
+    wcmin: Optional[confloat(ge=0.0)] = None
+    wcmax: Optional[confloat(ge=0.0)] = None
+    iron: Optional[confloat(ge=0.0)] = None
+    topd: Optional[conint(ge=-1)] = None
+    botd: Optional[conint(ge=-1)] = None
 
-    def as_dict(self, ignore: Optional[Iterable[str]] = None) -> Dict[str, str]:
-        precision = dict((x[0], x[2]) for x in nmap.values())
-        precision["depth"] = 0
-        precision["split"] = 0
-        precision["wcmin"] = 1
-        precision["wcmax"] = 1
-        precision["sks"] = 2
-        precision["iron"] = 5
+    class Config:
+        validate_assignment = True
 
-        out = {}
-        for field, field_type in self.__annotations__.items():
-            value = getattr(self, field)
-            if field == NODATA:
-                out[field] = f"{value:.2f}"
-            elif isinstance(field_type, int):
-                out[field] = str(value)
-            else:
-                out[field] = f"{value:.{precision[field]}f}"
+    @root_validator
+    def check_wcmin_smaller_wcmax(cls, values):
+        wcmin, wcmax = values.get("wcmin"), values.get("wcmax")
+        if None not in [wcmin, wcmax]:
+            if wcmin >= wcmax:
+                raise ValidationError("wcmin must be smaller wcmax")
+        return values
 
-        if ignore:
-            for key in ignore:
-                out.pop(key, None)
+    @root_validator
+    def check_texture_is_plausible(cls, values):
+        sand, silt, clay = values.get("sand"), values.get("silt"), values.get("clay")
+        args = [a for a in [sand, silt, clay] if a is not None]
+        if args:
+            if sum(args) > 1.0:
+                raise ValidationError("sum(sand, silt, clay) > 100")
+        return values
 
-        return out
+    @root_validator
+    def check_layer_subdivision(cls, values):
+        depth, split = values.get("depth"), values.get("split")
+        if all([depth, split]):
+            if depth / split < 1:
+                raise ValidationError("soil sublayers too small")
+        return values
+
+    def json(cls):
+        """custom json() function that also replaces None with NODATA"""
+        return json.dumps(cls, indent=2, default=pydantic_encoder).replace(
+            "null", str(NODATA)
+        )
+
+    def serialize(cls, ignore=["topd", "botd"]):
+        """serialize data in ldndc layer conform format"""
+
+        # format significant digits
+        def _format(var: str, value: float) -> str:
+            k, _, significant = tuple(zip(*nmap.values()))
+            Ddigits = dict(zip(k, significant))
+            if var in Ddigits:
+                return str(round(value, Ddigits[var]))
+            elif var in ["wcmin", "wcmax"]:
+                return str(round(value, 2))
+            return str(value)
+
+        data = json.loads(
+            json.dumps(cls, indent=2, default=pydantic_encoder).replace(
+                "null", str(NODATA)
+            )
+        )
+        return {k: _format(k, v) for k, v in data.items() if k not in ignore}
