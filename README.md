@@ -1,7 +1,7 @@
 ![Latest Release](https://img.shields.io/github/tag/cwerner/ldndctools.svg)
 ![Size](https://img.shields.io/github/repo-size/cwerner/ldndctools.svg)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-![CI/CD](https://github.com/cwerner/ldndctools/actions/workflows/base-ci.yml/badge.svg)
+![CI/CD](https://github.com/cwerner/ldndctools/actions/workflows/ci.yml/badge.svg)
 
 # LandscapeDNDC preprocessing tools
 
