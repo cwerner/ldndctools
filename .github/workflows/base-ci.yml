@@ -31,7 +31,7 @@ jobs:
         sudo apt-get update
         sudo apt-get install gdal-bin libgdal-dev
         python -m pip install --upgrade pip
-        python -m pip install wheel flake8 pytest
+        python -m pip install wheel flake8 pytest pytest-cov
         python -m pip install GDAL==3.4.1       
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
         pip install -e .
@@ -41,6 +41,13 @@ jobs:
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-    - name: Run tests
+    - name: Run tests and build coverage file
       run: |
-        pytest .
+          pytest --junitxml=pytest.xml --cov-report=term-missing:skip-covered --cov=ldndctools tests/ | tee pytest-coverage.txt
+
+    - name: Pytest coverage comment
+      uses: MishaKav/pytest-coverage-comment@main
+      with:
+        pytest-coverage-path: ./pytest-coverage.txt
+        junitxml-path: ./pytest.xml
+        
