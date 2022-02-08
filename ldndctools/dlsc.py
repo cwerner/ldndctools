@@ -12,26 +12,21 @@
 # Christian Werner (IMK-IFU, KIT)
 # christian.werner@kit.edu
 
-import sys
-
-if sys.version_info >= (3, 7):
-    from importlib import resources
-else:
-    import importlib_resources as resources
-
 import logging
 import os
+from importlib import resources
 from pathlib import Path
 
 import intake
 import numpy as np
+from pydantic import ValidationError
 from tqdm import tqdm
 
 from ldndctools.cli.cli import cli
-from ldndctools.cli.selector import CoordinateSelection, Selector, ask_for_resolution
+from ldndctools.cli.selector import ask_for_resolution, CoordinateSelection, Selector
 from ldndctools.extra import get_config, set_config
 from ldndctools.misc.create_data import create_dataset
-from ldndctools.misc.types import RES, BoundingBox
+from ldndctools.misc.types import BoundingBox, RES
 
 log = logging.getLogger(__name__)
 
@@ -85,8 +80,14 @@ def main():
 
     bbox = None
     if args.bbox:
-        x1, y1, x2, y2 = [float(x) for x in args.bbox.split(",")]
-        bbox = BoundingBox(x1=x1, y1=y1, x2=x2, y2=y2)
+        x1, y1, x2, y2 = [int(x) for x in args.bbox.split(",")]
+        try:
+            bbox = BoundingBox(x1=x1, y1=y1, x2=x2, y2=y2)
+        except ValidationError:
+            print("Ilegal bounding box coordinates specified.")
+            print("required: x1,y1,x2,y2 [cond: x1<x2, y1<y2]")
+            print(f"given:    x1={x1},y1={y1},x2={x2},y2={y2}")
+            exit(1)
 
     if not args.outfile:
         cfg["outname"] = f"sites_{res.name}.xml"
