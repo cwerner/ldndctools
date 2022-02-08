@@ -4,9 +4,10 @@ from typing import Any, Iterable, Optional, Tuple
 
 import numpy as np
 import xarray as xr
+from pydantic import ValidationError
 
 from ldndctools.misc.helper import mutually_exclusive
-from ldndctools.misc.types import RES, LayerData, nmap
+from ldndctools.misc.types import LayerData, nmap, RES
 from ldndctools.misc.xmlclasses import SiteXML
 
 
@@ -14,13 +15,15 @@ def translate_data_format(d: xr.Dataset) -> Iterable[LayerData]:
     """translate data from nc soil file (point-wise xarray sel) to new naming/ units"""
 
     data = []
-    ks = nmap.keys()
     for lev in d.lev:
         ld = LayerData()
 
-        for k in ks:
-            name, conv, _ = nmap[k]
-            setattr(ld, name, d.sel(lev=lev)[k].values.item() * conv)
+        for k in nmap.keys():
+            varname, conv, _ = nmap[k]
+            try:
+                setattr(ld, varname, d.sel(lev=lev)[k].values.item() * conv)
+            except ValidationError:
+                setattr(ld, varname, None)
         data.append(ld)
     return data
 
@@ -37,7 +40,7 @@ class SiteXmlWriter:
 
     @property
     def number_of_sites(self) -> int:
-        return int(self.soil.PROP1.sel(lev=1).count().item())
+        return self.mask.sum().item()
 
     @property
     def arrays(self) -> xr.Dataset:
@@ -117,20 +120,22 @@ class SiteXmlWriter:
                 data = translate_data_format(d)
 
                 # check for valid layer(s)
-                if data[0].topd >= 0.0 and (data[0].botd - data[0].topd) * 10 > 0:
+                if data[0].topd is not None and data[0].botd is not None:
                     site = SiteXML(
                         lat=lat, lon=lon, id=Dcids[(lat, lon)]
                     )  # **BASEINFO)
 
-                    # 5 layers !!!
-                    for i in range(5):
-                        lay = data[i]
+                    for i, lay in enumerate(data):
+                        assert i < 5, "Currently max of 5 layers expected"
 
-                        if lay.ph < 0:
+                        # abort if we encounter illegal value
+                        if lay.ph is None:
                             break
 
                         if lay.topd >= 0.0:
                             lay.depth = (lay.botd - lay.topd) * 10
+
+                        # TODO: refactor into function?
                         if i in [0, 1]:
                             lay.split = 10
                         elif i in [2, 3]:

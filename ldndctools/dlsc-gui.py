@@ -1,7 +1,8 @@
 import io
-import sys
+from importlib import resources
 
 import intake
+import pandas as pd
 import streamlit as st
 
 from ldndctools.cli.selector import Selector
@@ -11,9 +12,6 @@ from ldndctools.io.zipwriter import ZipWriter
 from ldndctools.misc.create_data import create_dataset
 from ldndctools.misc.helper import dataset_to_bytes, get_s3_link
 from ldndctools.misc.types import RES
-
-if sys.version_info >= (3, 7):
-    from importlib import resources
 
 
 def widget_resolution():
@@ -42,18 +40,29 @@ def widget_process(state=None):
     return start, stop, notify, note, file_name
 
 
-# @provide_state()
-def main():
+def load_catalog():
+    with resources.path("data", "catalog.yml") as cat:
+        catalog = intake.open_catalog(str(cat))
+    return catalog
 
-    res = widget_resolution()
+
+def load_admin_data(catalog, res: RES) -> pd.DataFrame:
 
     # 110m is pretty poor - LR also gets 50m
     res_scale_mapper = {RES.LR: 50, RES.MR: 50, RES.HR: 10}
 
-    with resources.path("data", "catalog.yml") as cat:
-        catalog = intake.open_catalog(str(cat))
-
     df = catalog.admin(scale=res_scale_mapper[res]).read()
+    return df
+
+
+def main():
+
+    res = widget_resolution()
+
+    catalog = load_catalog()
+
+    df = load_admin_data(catalog, res)
+
     selector = Selector(df)
 
     # build gui

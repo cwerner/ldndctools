@@ -1,5 +1,4 @@
 import logging
-import sys
 from typing import Iterable
 
 import geopandas as gpd
@@ -8,24 +7,9 @@ import questionary
 from questionary.prompts.common import Choice, Separator
 from shapely.geometry import Polygon
 
-from ldndctools.misc.types import RES, BoundingBox
+from ldndctools.misc.types import BoundingBox, RES
 
 logging.getLogger("fiona").setLevel(logging.WARNING)
-
-if sys.version_info >= (3, 7):
-    from dataclasses import dataclass
-    from importlib import resources
-
-else:
-    import importlib_resources as resources  # noqa
-
-    try:
-        from dataclasses import dataclass  # noqa
-    except ImportError:
-        print(
-            "Dataclasses required. Install Python >= 3.7 or the dataclasses package"
-            " from PyPi"
-        )
 
 
 def clean_results(x):
@@ -67,7 +51,7 @@ def ask_for_region(self):
 
     selection = list(set(clean_results(selection)))
 
-    return self._extract_countries(selection)
+    return self.extract_countries(selection)
 
 
 def ask_for_resolution(cfg):
@@ -98,7 +82,7 @@ class Selector(object):
         self._bbox = BoundingBox()
         self._names = sorted(self._df.ADM0_A3.unique())
 
-    def _extract_countries(self, selection):
+    def extract_countries(self, selection):
         # merge countries of (potentially) multiple regions
         countries = {}
         for sel in selection:
@@ -194,7 +178,7 @@ class Selector(object):
         self._bbox = bbox
 
     def set_region(self, region: Iterable[str]) -> None:
-        self._selection = self._extract_countries(region)
+        self._selection = self.extract_countries(region)
 
     @property
     def countries(self):
@@ -223,8 +207,9 @@ class Selector(object):
             bbox = gpd.GeoDataFrame([1], geometry=[bbox_poly], crs=self.gdf.crs)
 
             df = self.gdf.assign(dummy=0)
-            return gpd.clip(df.dissolve(by="dummy").loc[:, ["geometry"]], bbox)
-
+            gdf_mask = gpd.clip(df.dissolve(by="dummy").loc[:, ["geometry"]], bbox)
+            if len(gdf_mask) > 0:
+                return gdf_mask
         return None
 
     def ask(self):
