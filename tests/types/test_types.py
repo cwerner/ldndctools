@@ -11,10 +11,8 @@ def layer_data():
 
 @pytest.fixture
 def layer_data_fields():
-    return set(
-        "depth,split,ph,scel,bd,sks,norg,corg,clay,"
-        + "wcmin,wcmax,sand,silt,iron,topd,botd".split(",")
-    )
+    flds = "depth,split,ph,scel,bd,sks,norg,corg,clay,wcmin,wcmax,sand,silt,iron,topd,botd"
+    return set(flds.split(","))
 
 
 def test_bounding_box_valid_ranges():
