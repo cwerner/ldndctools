@@ -2,7 +2,7 @@ import math
 import xml.dom.minidom as md
 import xml.etree.cElementTree as et
 
-from ldndctools.misc.types import NODATA, LayerData
+from ldndctools.misc.types import LayerData, NODATA
 
 
 def calc_hydraulic_properties(ld: LayerData) -> LayerData:
@@ -112,8 +112,7 @@ class SiteXML(BaseXML):
         if not litter:
             ld = calc_hydraulic_properties(ld)
 
-        ld.split = 1
-        soil_layer = et.Element("layer", **ld.as_dict(ignore=["topd", "botd"]))
+        soil_layer = et.Element("layer", **ld.serialize())
 
         if extra_split:
             # create identical top layer with finer discretization

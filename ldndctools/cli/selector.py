@@ -7,7 +7,7 @@ import questionary
 from questionary.prompts.common import Choice, Separator
 from shapely.geometry import Polygon
 
-from ldndctools.misc.types import RES, BoundingBox
+from ldndctools.misc.types import BoundingBox, RES
 
 logging.getLogger("fiona").setLevel(logging.WARNING)
 
@@ -207,8 +207,9 @@ class Selector(object):
             bbox = gpd.GeoDataFrame([1], geometry=[bbox_poly], crs=self.gdf.crs)
 
             df = self.gdf.assign(dummy=0)
-            return gpd.clip(df.dissolve(by="dummy").loc[:, ["geometry"]], bbox)
-
+            gdf_mask = gpd.clip(df.dissolve(by="dummy").loc[:, ["geometry"]], bbox)
+            if len(gdf_mask) > 0:
+                return gdf_mask
         return None
 
     def ask(self):
