@@ -11,7 +11,9 @@ def layer_data():
 
 @pytest.fixture
 def layer_data_fields():
-    flds = "depth,split,ph,scel,bd,sks,norg,corg,clay,wcmin,wcmax,sand,silt,iron,topd,botd"
+    flds = (
+        "depth,split,ph,scel,bd,sks,norg,corg,clay,wcmin,wcmax,sand,silt,iron,topd,botd"
+    )
     return set(flds.split(","))
 
 
@@ -62,7 +64,7 @@ def test_layer_data_serialize_does_not_contain_null(layer_data):
 
 def test_layer_data_serialize_returns_dict_with_number_values(layer_data):
     assert type(layer_data.serialize()) == dict
-    assert all([isinstance(x, (float, int)) for x in layer_data.serialize().values()])
+    assert all([isinstance(x, str) for x in layer_data.serialize().values()])
 
 
 def test_layer_data_contains_all_fields(layer_data, layer_data_fields):
