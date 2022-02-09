@@ -5,6 +5,12 @@ from functools import wraps
 import boto3
 import netCDF4
 import xarray as xr
+from dotenv import load_dotenv
+
+load_dotenv()
+
+AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
+AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
 
 
 # from: https://stackoverflow.com/a/54487188/5300574
@@ -46,9 +52,18 @@ def get_s3_link(
     bucket_name: str,
     endpoint_url: str = "https://s3.imk-ifu.kit.edu:8082",
 ) -> str:
-    session = boto3.Session(profile_name="ifu-s3")
+    session = boto3.Session(
+        aws_access_key_id=AWS_ACCESS_KEY_ID,
+        aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+    )
 
-    client = session.client("s3", endpoint_url=endpoint_url)
+    client = session.client(
+        "s3",
+        aws_access_key_id=AWS_ACCESS_KEY_ID,
+        aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+        endpoint_url=endpoint_url,
+    )
+
     client.put_object(
         Body=buffer,
         Bucket=bucket_name,
@@ -57,8 +72,8 @@ def get_s3_link(
         Key=filename,
     )
 
-    # NOTE: currently not available for NetApp
-    # download_url = client.presigned_get_object(
-    #     bucket_name, filename)
-    download_url = f"{endpoint_url}/{bucket_name}/{filename}"
+    download_url = client.generate_presigned_url(
+        "get_object", Params={"Bucket": bucket_name, "Key": filename}, ExpiresIn=300
+    )
+
     return download_url
