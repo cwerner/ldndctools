@@ -55,26 +55,26 @@ class SiteXML(BaseXML):
         et.SubElement(soil, "layers")
 
     def add_soil_layer(
-        self, ld: LayerData, litter: bool = False, extra_split: bool = True
+        self, ld: LayerData, litter: bool = False, extra_split: bool = False
     ):
         """ this adds a soil layer to the given site (to current if no ID given)"""
         # only calculate hydrological properties if we have a mineral soil layer added
         if not litter:
             ld = calc_hydraulic_properties(ld)
 
-        soil_layer = et.Element("layer", **ld.serialize())
-
         if extra_split:
             # create identical top layer with finer discretization
-            # TODO: write test to check expected stratification
-            soil_layer_extra = soil_layer.copy()
-            soil_layer_extra.attrib["depth"] = "20"
-            soil_layer_extra.attrib["split"] = "4"
+            if ld.depth >= 40:
+                ld_extra = ld.copy()
+                ld_extra.depth = 20
+                ld_extra.split = 4
 
+                # adjust height of original top layer to be consistent
+                ld.depth = ld.depth - 20
+                ld.split = ld.depth // 20
+
+            soil_layer_extra = et.Element("layer", **ld_extra.serialize())
             self.xml.find("./soil/layers").append(soil_layer_extra)
 
-            # adjust height of original layer to be consistent
-            soil_layer.attrib["depth"] = "180"
-            soil_layer.attrib["split"] = "9"
-
+        soil_layer = et.Element("layer", **ld.serialize())
         self.xml.find("./soil/layers").append(soil_layer)
