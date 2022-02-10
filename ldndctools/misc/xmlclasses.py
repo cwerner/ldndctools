@@ -2,6 +2,7 @@ import math
 import xml.dom.minidom as md
 import xml.etree.cElementTree as et
 
+from ldndctools.misc.errors import ParameterMissingError
 from ldndctools.misc.types import LayerData, NODATA
 
 
@@ -26,6 +27,9 @@ def calc_hydraulic_properties(ld: LayerData) -> LayerData:
     Sand, Clay [%], BD [g cm-3], Corg [%]
     """
 
+    if None in [ld.corg, ld.clay, ld.sand, ld.bd]:
+        raise ParameterMissingError("Required: corg, clay, sand, bd")
+
     # convert units
     corg = ld.corg * 100
     clay = ld.clay * 100
@@ -48,6 +52,21 @@ def calc_hydraulic_properties(ld: LayerData) -> LayerData:
     wilting_point = theta_r + (theta_s - theta_r) / math.pow(
         (1.0 + math.pow(alpha * 15800.0, vgn)), vgm
     )
+
+    # TODO: check this more systematically
+    #
+    # Which combo of soil parameters is valid and should be corrected if
+    # wcmin/ wcmax calc is bad, and which should be blocked and raised
+
+    try:
+        if field_capacity < wilting_point:
+            raise ValueError("Field capacity < wilting point!")
+
+    except ValueError:
+        print(
+            "WARNING: Field capacity < wilting point! Fixing with: wcmin = wcmax - 10"
+        )
+        wilting_point = field_capacity - 0.01
 
     ld.wcmax = field_capacity * 1000
     ld.wcmin = wilting_point * 1000
