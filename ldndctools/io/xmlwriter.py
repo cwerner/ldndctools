@@ -59,7 +59,7 @@ class SiteXmlWriter:
         ids: Optional[Iterable[int]] = None,
         id_array: Optional[xr.DataArray] = None,
         coords: Optional[Iterable[Tuple[float, float]]] = None,
-        extra_split: Optional[bool] = False,
+        extra_split: Optional[bool] = True,
     ) -> str:
 
         if status_widget:
