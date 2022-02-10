@@ -1,7 +1,7 @@
 import xml.dom.minidom as md
 import xml.etree.cElementTree as et
 
-from ldndctools.misc.functions import calc_hydraulic_properties
+from ldndctools.misc.calculations import calc_hydraulic_properties
 from ldndctools.misc.types import LayerData, NODATA
 
 

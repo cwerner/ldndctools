@@ -1,8 +1,8 @@
 import pytest
 
+from ldndctools.misc.calculations import calc_hydraulic_properties
 from ldndctools.misc.errors import ParameterMissingError
 from ldndctools.misc.types import LayerData
-from ldndctools.misc.xmlclasses import calc_hydraulic_properties
 
 
 def test_basic_computation():
