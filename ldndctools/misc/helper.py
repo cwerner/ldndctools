@@ -1,4 +1,5 @@
 """assorted helper functions that currently do not have a dedicate place (yet)"""
+import logging
 import os
 import xml.dom.minidom as md
 import xml.etree.cElementTree as et
@@ -13,6 +14,9 @@ load_dotenv()
 
 AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
 AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
+
+logging.getLogger("boto3").setLevel(logging.WARNING)
+logging.getLogger("botocore").setLevel(logging.WARNING)
 
 
 # from: https://stackoverflow.com/a/54487188/5300574
