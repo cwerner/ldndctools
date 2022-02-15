@@ -20,11 +20,16 @@ def create_dataset(
     soil = soil.rio.write_crs(4326)
 
     if isinstance(selector, Selector):
+        print("Using Selector")
         if selector.gdf_mask is None:
             print("No valid data to process for this region/ bbox request.")
             exit(1)
         soil = soil.rio.clip(selector.gdf_mask.geometry, all_touched=True)
-        soil = soil.where((soil.PROP1.sel(lev=1) > 0) & (soil.PHAQ.sel(lev=1) > 0))
+        soil = soil.where(
+            (soil.PROP1.sel(lev=1) > 0)
+            & (soil.PHAQ.sel(lev=1) > 0)
+            & (soil.BULK.sel(lev=1) > 0)
+        )
         xmlwriter = SiteXmlWriter(soil, res=res)
         site_xml = xmlwriter.write(progressbar=progressbar, status_widget=status_widget)
 
@@ -36,7 +41,11 @@ def create_dataset(
             maxy=max(selector.lats),
             all_touched=True,
         )
-        soil = soil.where((soil.PROP1.sel(lev=1) > 0) & (soil.PHAQ.sel(lev=1) > 0))
+        soil = soil.where(
+            (soil.PROP1.sel(lev=1) > 0)
+            & (soil.PHAQ.sel(lev=1) > 0)
+            & (soil.BULK.sel(lev=1) > 0)
+        )
 
         results = []
         for lat, lon in zip(selector.lats, selector.lons):

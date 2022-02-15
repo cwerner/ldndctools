@@ -33,8 +33,12 @@ class SiteXmlWriter:
 
     def __init__(self, soil: xr.Dataset, res: RES):
         self.soil = soil
-        self.mask = xr.where(soil.PROP1.sel(lev=1) > 0, 1, 0)
-        self.mask = self.mask.where(self.mask == 1, self.mask)
+        self.mask = xr.ones_like(self.soil.PROP1.sel(lev=1).squeeze())
+        self.mask = self.mask.where(
+            (soil.PROP1.sel(lev=1) > 0)
+            & (soil.PHAQ.sel(lev=1) > 0)
+            & (soil.BULK.sel(lev=1) > 0)
+        )
         self.res = res
         self.ids = None
 
@@ -87,9 +91,7 @@ class SiteXmlWriter:
                 Ljx.append(j)
                 Dcids[(self.soil.lat.values[j], self.soil.lon.values[i])] = cid
 
-        self.ids = xr.ones_like(self.mask) * np.nan
-        self.ids[:] = ids
-        self.ids = self.ids * self.mask
+        self.ids = ids * self.mask
 
         def create_chunks(items):
             block = 200
@@ -125,23 +127,19 @@ class SiteXmlWriter:
                         lat=lat, lon=lon, id=Dcids[(lat, lon)]
                     )  # **BASEINFO)
 
+                    add_site = False
                     for i, lay in enumerate(data):
                         assert i < 5, "Currently max of 5 layers expected"
 
-                        # abort if we encounter illegal value
-                        if lay.ph is None:
+                        # abort if we have no valid data for layer
+                        if None in [lay.ph, lay.bd, lay.clay, lay.sand]:
                             break
 
+                        # break if layer depth is illegal
                         if lay.topd >= 0.0:
                             lay.depth = (lay.botd - lay.topd) * 10
-
-                        # TODO: refactor into function?
-                        if i in [0, 1]:
-                            lay.split = 10
-                        elif i in [2, 3]:
-                            lay.split = 4
                         else:
-                            lay.split = 2
+                            break
 
                         # default iron percentage
                         lay.iron = 0.01
@@ -152,7 +150,10 @@ class SiteXmlWriter:
                             )
                         else:
                             site.add_soil_layer(lay, litter=False)
-                    sites.append(site)
+                        add_site = True
+
+                    if add_site:
+                        sites.append(site)
 
                     if progressbar:
                         if hasattr(progressbar, "progress"):
