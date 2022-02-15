@@ -44,7 +44,7 @@ class SiteXML(BaseXML):
             usehistory=_use_history,
             soil="NONE",
             humus="NONE",
-            lheight="0.0",
+            litterheight="0.0",
             corg5=str(NODATA),
             corg30=str(NODATA),
         )
@@ -67,11 +67,9 @@ class SiteXML(BaseXML):
             if ld.depth >= 40:
                 ld_extra = ld.copy()
                 ld_extra.depth = 20
-                ld_extra.split = 4
 
                 # adjust height of original top layer to be consistent
                 ld.depth = ld.depth - 20
-                ld.split = ld.depth // 20
 
             soil_layer_extra = et.Element("layer", **ld_extra.serialize())
             self.xml.find("./soil/layers").append(soil_layer_extra)
