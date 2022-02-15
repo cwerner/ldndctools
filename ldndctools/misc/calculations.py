@@ -108,10 +108,10 @@ def calc_hydraulic_properties(ld: LayerData) -> LayerData:
             raise ValueError("Field capacity < wilting point!")
 
     except ValueError:
-        print(
-            "WARNING: Field capacity < wilting point! Fixing with: wcmin = wcmax - 10"
-        )
-        wilting_point = field_capacity - 0.01
+        print("WARNING: Field capacity < wilting point! Fixing with: wcmin := None")
+        ld.wcmax = field_capacity * 1000
+        ld.wcmin = None
+        return ld
 
     ld.wcmax = field_capacity * 1000
     ld.wcmin = wilting_point * 1000
