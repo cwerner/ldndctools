@@ -26,36 +26,12 @@ def target_attribs():
 
 
 @pytest.fixture()
-def fake_isricwise():
-    ph = [
-        [[-1, 7.4, 5.2], [5.2, 6.5, 5.1], [-1, 6.2, 5.0]],
-        [[-1, 7.6, 5.3], [5.5, 6.6, -1], [-1, 6.5, 5.3]],
-        [[-1, 7.4, 5.2], [2.2, 6.8, -1], [-1, 6.4, -1]],
+def isricwise_ds():
+    # currently only using LR
+    test_files = [
+        os.path.join(os.path.dirname(__file__), p)
+        for p in ["data/ISRICWISE_DE_LR.nc", "data/ISRICWISE_DE_HR.nc"]
     ]
 
-    cl = [
-        [[-1, 0.30, 0.10], [0.1, 0.22, 0.1], [-1, 0.1, 0.15]],
-        [[-1, 0.31, 0.09], [0.1, 0.16, 0.05], [-1, 0.11, 0.13]],
-        [[-1, 0.29, 0.02], [0.05, 0.2, 0.2], [-1, 0.3, -1]],
-    ]
-
-    # NOTE: bd has one cell with valid data, but other vars are missing!
-    bd = [
-        [[0.5, 0.9, 0.95], [1.4, 1.3, 1.4], [-1, 1.6, 1.5]],
-        [[0.8, 0.95, 1.05], [1.3, 1.25, 1.35], [-1, 1.7, 1.85]],
-        [[0.6, 1.20, 1.3], [1.25, 1.45, 1.5], [-1, 1.65, -1]],
-    ]
-
-    coords = [("lev", [1, 2, 3]), ("lat", [0, 1, 2]), ("lon", [0, 1, 2])]
-    ds = xr.Dataset()
-    ds["PHAQ"] = xr.DataArray(ph, coords=coords)
-    ds["CLPC"] = xr.DataArray(cl, coords=coords)
-    ds["BULK"] = xr.DataArray(bd, coords=coords)
-
-    return ISRICWISE_SoilDataset(ds, zdim="lev")
-
-
-test_files = [
-    os.path.join(os.path.dirname(__file__), p)
-    for p in ["data/GLOBAL_ISRICSOIL_DE_LR.nc", "data/GLOBAL_ISRICSOIL_DE_HR.nc"]
-]
+    ds = xr.open_dataset(test_files[0])
+    return ISRICWISE_SoilDataset(ds)
