@@ -17,6 +17,7 @@ def count_layers(x):
 
 class ISRICWISE_SoilDataset(SoilDataset):
     _source_attrs: Iterable[BaseAttribute] = [
+        BaseAttribute(name="DEPTH", unit="cm"),
         BaseAttribute(name="BULK", unit="g cm-3"),
         BaseAttribute(name="PHAQ", unit="-"),
         BaseAttribute(name="CLPC", unit="percent"),
@@ -29,6 +30,7 @@ class ISRICWISE_SoilDataset(SoilDataset):
 
     _mapper: Dict[str, str] = {
         "BULK": "bd",
+        "DEPTH": "depth",
         "PHAQ": "ph",
         "CLPC": "clay",
         "SDTO": "sand",
@@ -40,11 +42,21 @@ class ISRICWISE_SoilDataset(SoilDataset):
 
     def __init__(self, soildata: xr.Dataset, *, zdim: Optional[str] = "lev"):
         self._zdim = zdim
-        self._soil = soildata
-        self._mask = self._build_mask(soildata)
+        self._soil = self._calculate_missing_vars(soildata)
+        self._mask = self._build_mask(self._soil)
+
+    def _calculate_missing_vars(self, soildata: xr.Dataset) -> xr.Dataset:
+        """calculate missing soil variables (i.e. depth)"""
+        if set(["BotDep", "TopDep"]).issubset(soildata.data_vars):
+            depth = soildata["BotDep"] - soildata["TopDep"]
+            soildata["DEPTH"] = depth.where(depth > 0)
+        else:
+            raise ValueError("Required variables not in dataset")
+        return soildata
 
     def _build_mask(self, soildata: xr.Dataset):
-        check_vars = ["PHAQ", "BULK", "CLPC"]
+        """build a mask based on missing soil attributes"""
+        check_vars = ["PHAQ", "BULK", "CLPC", "DEPTH"]
 
         ds_mask = xr.Dataset()
         for v in [cv for cv in soildata.data_vars if cv in check_vars]:
