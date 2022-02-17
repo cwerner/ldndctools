@@ -1,3 +1,5 @@
+import os
+
 import pytest
 import xarray as xr
 
@@ -51,3 +53,9 @@ def fake_isricwise():
     ds["BULK"] = xr.DataArray(bd, coords=coords)
 
     return ISRICWISE_SoilDataset(ds, zdim="lev")
+
+
+test_files = [
+    os.path.join(os.path.dirname(__file__), p)
+    for p in ["data/GLOBAL_ISRICSOIL_DE_LR.nc", "data/GLOBAL_ISRICSOIL_DE_HR.nc"]
+]
