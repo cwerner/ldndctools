@@ -1,8 +1,12 @@
 from abc import ABC, abstractmethod
 
+import numpy as np
 import xarray as xr
 
 from ldndctools.sources.soil.types import FullAttribute
+
+# import geopandas as gpd
+
 
 __all__ = []
 
@@ -41,6 +45,14 @@ class SoilDataset(ABC):
     def _converter(self):
         pass
 
+    # TODO: flesh this out in full (with tests)
+    # def clip_mask(self, geometry: gpd.GeoSeries, all_touched:bool=True) -> None:
+    #     """clip mask to target region(s)"""
+    #     if self.mask is not None:
+    #         self._mask = self._mask.rio.clip(geometry, all_touched=all_touched)
+    #     else:
+    #         raise NotImplementedError("This is invalid!")
+
     @property
     def mask(self):
         """return binary mask"""
@@ -49,6 +61,25 @@ class SoilDataset(ABC):
             if self._mask is not None
             else None
         )
+
+    @property
+    def mask_3d(self):
+        """return 3d mask to clip soildata"""
+        lev_max_idx = self.layer_mask.max(skipna=True).astype(int).item()
+        mask = (self.layer_mask.values >= np.arange(lev_max_idx)[:, None, None]).astype(
+            int
+        )
+
+        for v in self.original.data_vars:
+            if len(self.original[v].squeeze(drop=True).shape) == 3:
+                break
+        else:
+            raise ValueError("A 3d data_var is required")
+
+        mask_3d = xr.ones_like(self.original[v])
+        mask_3d[:] = mask
+        mask_3d = mask_3d.where(mask_3d == 1)
+        return mask_3d
 
     @property
     def layer_mask(self):
@@ -62,11 +93,12 @@ class SoilDataset(ABC):
 
     @property
     def data(self):
-        """return xarray dataset with ldndc standard variables"""
+        """return masked xarray soil dataset with ldndc standard variables"""
         if self.original is not None:
             ds = xr.Dataset()
             for var in self.original.data_vars:
                 da = self._converter()(self.original[var])
-                ds[da.name] = da
+                if da is not None:
+                    ds[da.name] = da * self.mask_3d
             return ds
         return None
