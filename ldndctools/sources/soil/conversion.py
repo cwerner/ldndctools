@@ -9,6 +9,7 @@ def convert_unit(unit_a: str, unit_b: str) -> float:
     conversions = {
         ("fraction", "percent"): 100,
         ("g kg-1", "percent"): 1000,
+        ("mm", "cm"): 10,
     }
 
     if unit_a == unit_b:
@@ -49,12 +50,16 @@ class Converter:
             raise NotImplementedError("An xarray dataarray is required for source_data")
 
         source = next((x for x in self._a if x.name == var), None)
-        target = next((x for x in self._b if x.name == self._mapper[var]), None)
+        target = next(
+            (x for x in self._b if x.name == self._mapper.get(var, None)), None
+        )
 
-        conv = convert_unit(source.unit, target.unit)
-
-        target_data = source_data.copy() * conv
-        target_data.name = target.name
-        target_data.attrs["long_name"] = target.long_name
-        target_data.attrs["unit"] = target.unit
-        return target_data
+        if source is not None:
+            conv = convert_unit(source.unit, target.unit)
+            target_data = source_data.copy() * conv
+            target_data.name = target.name
+            target_data.attrs["long_name"] = target.long_name
+            target_data.attrs["unit"] = target.unit
+            return target_data
+        else:
+            return None
