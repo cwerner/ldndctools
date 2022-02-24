@@ -7,7 +7,7 @@ import xarray as xr
 from pydantic import ValidationError
 
 from ldndctools.misc.helper import mutually_exclusive
-from ldndctools.misc.types import LayerData, nmap, RES
+from ldndctools.misc.types import LayerData, RES
 from ldndctools.misc.xmlclasses import SiteXML
 
 
@@ -18,10 +18,13 @@ def translate_data_format(d: xr.Dataset) -> Iterable[LayerData]:
     for lev in d.lev:
         ld = LayerData()
 
-        for k in nmap.keys():
-            varname, conv, _ = nmap[k]
+        # TODO: catch this more elegantly via mask/ layer_mask
+        if np.isnan(d.sel(lev=lev)["depth"]):
+            continue
+
+        for varname, value in d.data_vars.items():
             try:
-                setattr(ld, varname, d.sel(lev=lev)[k].values.item() * conv)
+                setattr(ld, varname, value.sel(lev=lev).values.item())
             except ValidationError:
                 setattr(ld, varname, None)
         data.append(ld)
@@ -32,9 +35,8 @@ class SiteXmlWriter:
     """Site Xml File Writer"""
 
     def __init__(self, soil: xr.Dataset, res: RES):
-        self.soil = soil
-        self.mask = xr.where(soil.PROP1.sel(lev=1) > 0, 1, 0)
-        self.mask = self.mask.where(self.mask == 1, self.mask)
+        self.soil = soil.data
+        self.mask = soil.mask
         self.res = res
         self.ids = None
 
@@ -59,7 +61,7 @@ class SiteXmlWriter:
         ids: Optional[Iterable[int]] = None,
         id_array: Optional[xr.DataArray] = None,
         coords: Optional[Iterable[Tuple[float, float]]] = None,
-        extra_split: Optional[bool] = False,
+        extra_split: Optional[bool] = True,
     ) -> str:
 
         if status_widget:
@@ -87,9 +89,7 @@ class SiteXmlWriter:
                 Ljx.append(j)
                 Dcids[(self.soil.lat.values[j], self.soil.lon.values[i])] = cid
 
-        self.ids = xr.ones_like(self.mask) * np.nan
-        self.ids[:] = ids
-        self.ids = self.ids * self.mask
+        self.ids = ids * self.mask
 
         def create_chunks(items):
             block = 200
@@ -117,31 +117,21 @@ class SiteXmlWriter:
                 lat, lon = float(d.lat), float(d.lon)
 
                 # take point sel and return dict with modified data naming/ units
-                data = translate_data_format(d)
+                # TODO: do proper mask checking
+                if not np.isnan(d.sel(lev=1)["depth"].values.item()):
+                    data = translate_data_format(d)
 
-                # check for valid layer(s)
-                if data[0].topd is not None and data[0].botd is not None:
                     site = SiteXML(
                         lat=lat, lon=lon, id=Dcids[(lat, lon)]
                     )  # **BASEINFO)
 
+                    add_site = False
                     for i, lay in enumerate(data):
                         assert i < 5, "Currently max of 5 layers expected"
 
-                        # abort if we encounter illegal value
-                        if lay.ph is None:
+                        # abort if we have no valid data for layer
+                        if None in [lay.ph, lay.bd, lay.clay, lay.sand]:
                             break
-
-                        if lay.topd >= 0.0:
-                            lay.depth = (lay.botd - lay.topd) * 10
-
-                        # TODO: refactor into function?
-                        if i in [0, 1]:
-                            lay.split = 10
-                        elif i in [2, 3]:
-                            lay.split = 4
-                        else:
-                            lay.split = 2
 
                         # default iron percentage
                         lay.iron = 0.01
@@ -152,7 +142,10 @@ class SiteXmlWriter:
                             )
                         else:
                             site.add_soil_layer(lay, litter=False)
-                    sites.append(site)
+                        add_site = True
+
+                    if add_site:
+                        sites.append(site)
 
                     if progressbar:
                         if hasattr(progressbar, "progress"):

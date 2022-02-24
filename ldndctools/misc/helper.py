@@ -1,5 +1,8 @@
 """assorted helper functions that currently do not have a dedicate place (yet)"""
+import logging
 import os
+import xml.dom.minidom as md
+import xml.etree.cElementTree as et
 from functools import wraps
 
 import boto3
@@ -11,6 +14,9 @@ load_dotenv()
 
 AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
 AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
+
+logging.getLogger("boto3").setLevel(logging.WARNING)
+logging.getLogger("botocore").setLevel(logging.WARNING)
 
 
 # from: https://stackoverflow.com/a/54487188/5300574
@@ -77,3 +83,17 @@ def get_s3_link(
     )
 
     return download_url
+
+
+def prettify(elem):
+    """Return a pretty-printed XML string for the Element."""
+    rough_string = et.tostring(elem, "utf-8")
+    reparsed = md.parseString(rough_string)
+    str1 = reparsed.toprettyxml(indent="  ")
+    str2 = []
+    ss = str1.split("\n")
+    for s in ss:
+        x = "".join(s.split())
+        if x != "":
+            str2.append(s)
+    return "\n".join(str2) + "\n"
