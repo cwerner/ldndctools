@@ -35,10 +35,10 @@ class ValidationConfig:
 
 @dataclass(config=ValidationConfig)
 class BoundingBox:
-    x1: conint(ge=-180, le=180) = -180
-    x2: conint(ge=-180, le=180) = 180
-    y1: conint(ge=-90, le=90) = -90
-    y2: conint(ge=-90, le=90) = 90
+    x1: confloat(ge=-180, le=180) = -180
+    x2: confloat(ge=-180, le=180) = 180
+    y1: confloat(ge=-90, le=90) = -90
+    y2: confloat(ge=-90, le=90) = 90
 
     @root_validator
     def check_x1_smaller_x2(cls, values):
@@ -97,13 +97,13 @@ class LayerData(BaseModel):
     class Config:
         validate_assignment = True
 
-    @root_validator
-    def check_wcmin_smaller_wcmax(cls, values):
-        wcmin, wcmax = values.get("wcmin"), values.get("wcmax")
-        if None not in [wcmin, wcmax]:
-            if wcmin >= wcmax:
-                raise ValidationError("wcmin must be smaller wcmax")
-        return values
+    # @root_validator
+    # def check_wcmin_smaller_wcmax(cls, values):
+    #     wcmin, wcmax = values.get("wcmin"), values.get("wcmax")
+    #     if None not in [wcmin, wcmax]:
+    #         if wcmin >= wcmax:
+    #             raise ValidationError("wcmin must be smaller wcmax")
+    #     return values
 
     @root_validator
     def check_texture_is_plausible(cls, values):

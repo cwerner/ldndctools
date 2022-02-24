@@ -1,12 +1,11 @@
 from abc import ABC, abstractmethod
 
+import geopandas as gpd
 import numpy as np
+import rioxarray  # noqa
 import xarray as xr
 
 from ldndctools.sources.soil.types import FullAttribute
-
-# import geopandas as gpd
-
 
 __all__ = []
 
@@ -46,12 +45,30 @@ class SoilDataset(ABC):
         pass
 
     # TODO: flesh this out in full (with tests)
-    # def clip_mask(self, geometry: gpd.GeoSeries, all_touched:bool=True) -> None:
-    #     """clip mask to target region(s)"""
-    #     if self.mask is not None:
-    #         self._mask = self._mask.rio.clip(geometry, all_touched=all_touched)
-    #     else:
-    #         raise NotImplementedError("This is invalid!")
+    def clip_mask(self, geometry: gpd.GeoSeries, *, all_touched: bool = True) -> None:
+        """clip mask to target region(s)"""
+        if self.mask is not None:
+            self._mask.rio.write_crs("epsg:4326", inplace=True)
+            self._mask = self._mask.rio.clip(
+                geometry, all_touched=all_touched, drop=False
+            )
+        else:
+            raise NotImplementedError("This is invalid!")
+
+    def clip_mask_box(self, *, minx: int, miny: int, maxx: int, maxy: int) -> None:
+        """clip mask to target box"""
+
+        half_res = (self.data.coords["lon"][1] - self.data.coords["lon"][0]) * 0.5
+        if self.mask is not None:
+            self._mask.rio.write_crs("epsg:4326", inplace=True)
+            self._mask = self._mask.rio.clip_box(
+                minx=minx,
+                miny=miny,
+                maxx=maxx - half_res,
+                maxy=maxy - half_res,
+            )
+        else:
+            raise NotImplementedError("This is invalid!")
 
     @property
     def mask(self):
@@ -76,7 +93,10 @@ class SoilDataset(ABC):
         else:
             raise ValueError("A 3d data_var is required")
 
-        mask_3d = xr.ones_like(self.original[v])
+        # subset to target region
+        mask_3d = xr.ones_like(
+            self.original[v].sel(lat=self.layer_mask.lat, lon=self.layer_mask.lon)
+        )
         mask_3d[:] = mask
         mask_3d = mask_3d.where(mask_3d == 1)
         return mask_3d
