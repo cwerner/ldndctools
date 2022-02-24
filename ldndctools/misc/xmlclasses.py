@@ -71,8 +71,8 @@ class SiteXML(BaseXML):
                 # adjust height of original top layer to be consistent
                 ld.depth = ld.depth - 20
 
-            soil_layer_extra = et.Element("layer", **ld_extra.serialize())
-            self.xml.find("./soil/layers").append(soil_layer_extra)
+                soil_layer_extra = et.Element("layer", **ld_extra.serialize())
+                self.xml.find("./soil/layers").append(soil_layer_extra)
 
         soil_layer = et.Element("layer", **ld.serialize())
         self.xml.find("./soil/layers").append(soil_layer)
