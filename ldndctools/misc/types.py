@@ -35,10 +35,10 @@ class ValidationConfig:
 
 @dataclass(config=ValidationConfig)
 class BoundingBox:
-    x1: conint(ge=-180, le=180) = -180
-    x2: conint(ge=-180, le=180) = 180
-    y1: conint(ge=-90, le=90) = -90
-    y2: conint(ge=-90, le=90) = 90
+    x1: confloat(ge=-180, le=180) = -180
+    x2: confloat(ge=-180, le=180) = 180
+    y1: confloat(ge=-90, le=90) = -90
+    y2: confloat(ge=-90, le=90) = 90
 
     @root_validator
     def check_x1_smaller_x2(cls, values):
@@ -75,8 +75,8 @@ nmap = {
 
 
 class LayerData(BaseModel):
-    depth: conint(gt=0) = 10  # mm  -1
-    split: conint(ge=0) = 0  # int = -1
+    depth: conint(gt=0) = 20
+    split: Optional[conint(ge=0)] = None
     ph: Optional[confloat(ge=2.5, le=10.0)] = None
     scel: Optional[
         confloat(ge=0.0, lt=1.0)
@@ -97,13 +97,13 @@ class LayerData(BaseModel):
     class Config:
         validate_assignment = True
 
-    @root_validator
-    def check_wcmin_smaller_wcmax(cls, values):
-        wcmin, wcmax = values.get("wcmin"), values.get("wcmax")
-        if None not in [wcmin, wcmax]:
-            if wcmin >= wcmax:
-                raise ValidationError("wcmin must be smaller wcmax")
-        return values
+    # @root_validator
+    # def check_wcmin_smaller_wcmax(cls, values):
+    #     wcmin, wcmax = values.get("wcmin"), values.get("wcmax")
+    #     if None not in [wcmin, wcmax]:
+    #         if wcmin >= wcmax:
+    #             raise ValidationError("wcmin must be smaller wcmax")
+    #     return values
 
     @root_validator
     def check_texture_is_plausible(cls, values):
@@ -114,21 +114,13 @@ class LayerData(BaseModel):
                 raise ValidationError("sum(sand, silt, clay) > 100")
         return values
 
-    @root_validator
-    def check_layer_subdivision(cls, values):
-        depth, split = values.get("depth"), values.get("split")
-        if all([depth, split]):
-            if depth / split < 1:
-                raise ValidationError("soil sublayers too small")
-        return values
-
     def json(cls):
         """custom json() function that also replaces None with NODATA"""
         return json.dumps(cls, indent=2, default=pydantic_encoder).replace(
             "null", str(NODATA)
         )
 
-    def serialize(cls, ignore=["topd", "botd"]):
+    def serialize(cls, ignore=["topd", "botd", "split"]):
         """serialize data in ldndc layer conform format"""
 
         # format significant digits

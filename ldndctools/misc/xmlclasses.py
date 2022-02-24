@@ -1,58 +1,8 @@
-import math
 import xml.dom.minidom as md
 import xml.etree.cElementTree as et
 
+from ldndctools.misc.calculations import calc_hydraulic_properties
 from ldndctools.misc.types import LayerData, NODATA
-
-
-def calc_hydraulic_properties(ld: LayerData) -> LayerData:
-    """Calc hydraulic properties based on et al. (1996)
-
-    shape parameters: Woesten et al. (1999) Geoderma
-
-    OM (% organic matter)
-    D (bulk density)
-    topsoil 1, subsoil 0
-    C, S, (clay, silt in %)
-
-    formula:
-    θ_s = 0.7919 + 0.001691 * C - 0.29619 * D - 0.000001491 * S*S + \
-          0.0000821 * OM * OM + 0.02427 * C**-1 + 0.01113 * S**-1 + \
-          0.01472 * math.ln( S ) - 0.0000733 * OM * C - 0.000619 * D * C - \
-          0.001183 * D * OM - 0.0001664 * topsoil * S
-
-    ad-hoc AG Boden
-
-    Sand, Clay [%], BD [g cm-3], Corg [%]
-    """
-
-    # convert units
-    corg = ld.corg * 100
-    clay = ld.clay * 100
-    sand = ld.sand * 100
-    bd = ld.bd
-
-    theta_r = 0.015 + 0.005 * clay + 0.014 * corg
-    theta_s = 0.81 - 0.283 * bd + 0.001 * clay
-
-    log_n = 0.053 - 0.009 * sand - 0.013 * clay + 0.00015 * sand ** 2
-    log_alpha = -2.486 + 0.025 * sand - 0.351 * corg - 2.617 * bd - 0.023 * clay
-
-    alpha = math.e ** log_alpha
-    vgn = math.e ** log_n
-    vgm = 1.0  # (1.0 - (1.0/ vGn)) off as we do not use texture classes but real frac
-
-    field_capacity = theta_r + (theta_s - theta_r) / math.pow(
-        (1.0 + math.pow(alpha * 100.0, vgn)), vgm
-    )
-    wilting_point = theta_r + (theta_s - theta_r) / math.pow(
-        (1.0 + math.pow(alpha * 15800.0, vgn)), vgm
-    )
-
-    ld.wcmax = field_capacity * 1000
-    ld.wcmin = wilting_point * 1000
-
-    return ld
 
 
 class BaseXML(object):
@@ -94,7 +44,7 @@ class SiteXML(BaseXML):
             usehistory=_use_history,
             soil="NONE",
             humus="NONE",
-            lheight="0.0",
+            litterheight="0.0",
             corg5=str(NODATA),
             corg30=str(NODATA),
         )
@@ -112,19 +62,17 @@ class SiteXML(BaseXML):
         if not litter:
             ld = calc_hydraulic_properties(ld)
 
-        soil_layer = et.Element("layer", **ld.serialize())
-
         if extra_split:
             # create identical top layer with finer discretization
-            # TODO: write test to check expected stratification
-            soil_layer_extra = soil_layer.copy()
-            soil_layer_extra.attrib["depth"] = "20"
-            soil_layer_extra.attrib["split"] = "4"
+            if ld.depth >= 40:
+                ld_extra = ld.copy()
+                ld_extra.depth = 20
 
-            self.xml.find("./soil/layers").append(soil_layer_extra)
+                # adjust height of original top layer to be consistent
+                ld.depth = ld.depth - 20
 
-            # adjust height of original layer to be consistent
-            soil_layer.attrib["depth"] = "180"
-            soil_layer.attrib["split"] = "9"
+                soil_layer_extra = et.Element("layer", **ld_extra.serialize())
+                self.xml.find("./soil/layers").append(soil_layer_extra)
 
+        soil_layer = et.Element("layer", **ld.serialize())
         self.xml.find("./soil/layers").append(soil_layer)

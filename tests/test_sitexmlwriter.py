@@ -31,12 +31,9 @@ def site_xml_writer_hr():
 
 def test_sitexml_lowres_number_of_sites(site_xml_writer_lr):
     """check number of valid sites in lr data"""
-    assert site_xml_writer_lr.number_of_sites == 60700
+    assert site_xml_writer_lr.number_of_sites == 57300
 
 
 def test_sitexml_highres_number_of_sites(site_xml_writer_hr):
     """check number of valid sites in hr data"""
-    assert site_xml_writer_hr.number_of_sites == 2207986
-
-
-# def test_sitexml_lowres_number_of_sites(site_xml_writer):
+    assert site_xml_writer_hr.number_of_sites == 2069990

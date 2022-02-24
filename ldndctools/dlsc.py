@@ -27,6 +27,7 @@ from ldndctools.cli.selector import ask_for_resolution, CoordinateSelection, Sel
 from ldndctools.extra import get_config, set_config
 from ldndctools.misc.create_data import create_dataset
 from ldndctools.misc.types import BoundingBox, RES
+from ldndctools.sources.soil.soil_iscricwise import ISRICWISE_SoilDataset
 
 log = logging.getLogger(__name__)
 
@@ -80,7 +81,7 @@ def main():
 
     bbox = None
     if args.bbox:
-        x1, y1, x2, y2 = [int(x) for x in args.bbox.split(",")]
+        x1, y1, x2, y2 = [float(x) for x in args.bbox.split(",")]
         try:
             bbox = BoundingBox(x1=x1, y1=y1, x2=x2, y2=y2)
         except ValidationError:
@@ -108,7 +109,9 @@ def main():
         catalog = intake.open_catalog(str(cat))
 
     df = catalog.admin(scale=res_scale_mapper[res]).read()
-    soil = catalog.soil(res=res.name).read()
+    soil_raw = catalog.soil(res=res.name).read()
+
+    soil = ISRICWISE_SoilDataset(soil_raw)
 
     if args.file:
         selector = CoordinateSelection(args.file)

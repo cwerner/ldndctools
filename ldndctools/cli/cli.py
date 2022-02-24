@@ -119,13 +119,13 @@ def cli():
         "-c", dest="config", metavar="MYCONF", help="use MYCONF file as config"
     )
 
-    parser.add_argument(
-        "--extra-split",
-        action="store_true",
-        dest="extrasplit",
-        default=False,
-        help="subdivide the first soil layer (rice sims)",
-    )
+    # parser.add_argument(
+    #     "--no-extra-split",
+    #     action="store_true",
+    #     dest="noextrasplit",
+    #     default=False,
+    #     help="do not subdivide the first soil layer",
+    # )
 
     parser.add_argument(
         "--gui",
