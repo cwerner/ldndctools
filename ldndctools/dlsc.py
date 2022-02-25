@@ -134,10 +134,10 @@ def main():
             extent = selector.gdf_mask.bounds.iloc[0]
 
             new_bbox = BoundingBox(
-                x1=np.floor(extent.minx).astype("int").item(),
-                x2=np.ceil(extent.maxx).astype("int").item(),
-                y1=np.floor(extent.miny).astype("int").item(),
-                y2=np.ceil(extent.maxy).astype("int").item(),
+                x1=np.floor(extent.minx).astype("float").item(),
+                x2=np.ceil(extent.maxx).astype("float").item(),
+                y1=np.floor(extent.miny).astype("float").item(),
+                y2=np.ceil(extent.maxy).astype("float").item(),
             )
             selector.set_bbox(new_bbox)
 
