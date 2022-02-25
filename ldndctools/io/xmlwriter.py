@@ -62,7 +62,7 @@ class SiteXmlWriter:
         sample: Optional[int] = None,
         progressbar: Optional[Any] = None,
         status_widget: Optional[Any] = None,
-        ids: Optional[Iterable[int]] = None,
+        id_selection: Optional[Iterable[int]] = None,
         id_array: Optional[xr.DataArray] = None,
         coords: Optional[Iterable[Tuple[float, float]]] = None,
         extra_split: Optional[bool] = True,
@@ -70,6 +70,10 @@ class SiteXmlWriter:
 
         if status_widget:
             status_widget.warning("Preparing data")
+
+        if not all(v is None for v in [sample, id_selection, coords]):
+            # options currently not implemented
+            raise NotImplementedError
 
         ids: xr.DataArray = xr.zeros_like(self.mask, dtype=np.int32)
 
