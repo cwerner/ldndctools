@@ -5,6 +5,7 @@ import pytest
 
 from ldndctools.io.xmlwriter import SiteXmlWriter
 from ldndctools.misc.types import RES
+from ldndctools.sources.soil.soil_iscricwise import ISRICWISE_SoilDataset
 
 
 @pytest.fixture
@@ -14,8 +15,8 @@ def site_xml_writer_lr():
         catalog = intake.open_catalog(str(cat))
 
     soil = catalog.soil(res=RES.LR.name).read()
-
-    return SiteXmlWriter(soil, res=RES.LR)
+    soildata = ISRICWISE_SoilDataset(soil)
+    return SiteXmlWriter(soildata, res=RES.LR)
 
 
 @pytest.fixture
@@ -25,8 +26,8 @@ def site_xml_writer_hr():
         catalog = intake.open_catalog(str(cat))
 
     soil = catalog.soil(res=RES.HR.name).read()
-
-    return SiteXmlWriter(soil, res=RES.HR)
+    soildata = ISRICWISE_SoilDataset(soil)
+    return SiteXmlWriter(soildata, res=RES.HR)
 
 
 def test_sitexml_lowres_number_of_sites(site_xml_writer_lr):
