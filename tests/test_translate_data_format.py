@@ -27,9 +27,7 @@ def soil_location(soil):
         lon=xr.DataArray([11.10], dims="points"),
         method="nearest",
     )
-
-    sample_point = sample_points.sel(points=0)
-    return sample_point
+    return sample_points.sel(points=0)
 
 
 def test_translate_data_format_return_type(soil_location):
