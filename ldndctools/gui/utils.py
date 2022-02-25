@@ -17,5 +17,5 @@ CONFIG_DEFAULTS: Dict[str, Any] = {
     "regions": ["EU28PLUS"],
     "countries": [],
     "file_name": "sites",
-    "bbox": BoundingBox(x1=-180, x2=180, y1=-90, y2=90),
+    "bbox": BoundingBox(x1=-180.0, x2=180.0, y1=-90.0, y2=90.0),
 }

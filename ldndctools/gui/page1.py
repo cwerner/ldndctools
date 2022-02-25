@@ -67,10 +67,10 @@ def widget_clip(self):
             a1, a2 = st.columns(2)
             a3, a4 = st.columns(2)
 
-            x1 = a1.number_input("x1", min_value=-180, max_value=180, value=bbox.x1)
-            x2 = a2.number_input("x2", min_value=-180, max_value=180, value=bbox.x2)
-            y1 = a3.number_input("y1", min_value=-90, max_value=90, value=bbox.y1)
-            y2 = a4.number_input("y2", min_value=-90, max_value=90, value=bbox.y2)
+            x1 = a1.number_input("x1", min_value=-180.0, max_value=180.0, value=bbox.x1)
+            x2 = a2.number_input("x2", min_value=-180.0, max_value=180.0, value=bbox.x2)
+            y1 = a3.number_input("y1", min_value=-90.0, max_value=90.0, value=bbox.y1)
+            y2 = a4.number_input("y2", min_value=-90.0, max_value=90.0, value=bbox.y2)
             self.state["bbox"] = BoundingBox(x1=x1, x2=x2, y1=y1, y2=y2)
 
             file = st.file_uploader("Drop ShapeFile for custom bbox")  # noqa
@@ -84,15 +84,15 @@ def widget_clip(self):
     if shrink:
         extent = self.selector.gdf_mask.bounds.iloc[0]
         new_bbox = BoundingBox(
-            x1=np.floor(extent.minx).astype("int").item(),
-            x2=np.ceil(extent.maxx).astype("int").item(),
-            y1=np.floor(extent.miny).astype("int").item(),
-            y2=np.ceil(extent.maxy).astype("int").item(),
+            x1=np.floor(extent.minx).astype("float").item(),
+            x2=np.ceil(extent.maxx).astype("float").item(),
+            y1=np.floor(extent.miny).astype("float").item(),
+            y2=np.ceil(extent.maxy).astype("float").item(),
         )
         self.state["bbox"] = new_bbox
 
     if reset:
-        self.state["bbox"] = BoundingBox(x1=-180, x2=180, y1=-90, y2=90)
+        self.state["bbox"] = BoundingBox(x1=-180.0, x2=180.0, y1=-90.0, y2=90.0)
 
 
 def widget_main(self):
@@ -113,7 +113,7 @@ def create_map(df, bbox=None):
     color = "#{:02x}{:02x}{:02x}".format(240, 21, 83)
 
     # show bbox if it's not the default
-    if bbox and bbox != BoundingBox(x1=-180, x2=180, y1=-90, y2=90):
+    if bbox and bbox != BoundingBox(x1=-180.0, x2=180.0, y1=-90.0, y2=90.0):
         fg1 = folium.FeatureGroup(name="Bounding box")
         bounds = bbox_to_bounds(bbox)
         fg1.add_child(folium.Rectangle(bounds=bounds, color=color, dash_array="5"))
