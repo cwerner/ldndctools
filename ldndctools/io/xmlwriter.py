@@ -1,6 +1,6 @@
 import xml.dom.minidom as md
 import xml.etree.cElementTree as et
-from typing import Any, Iterable, Optional, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 import numpy as np
 import xarray as xr
@@ -13,10 +13,10 @@ from ldndctools.misc.xmlclasses import SiteXML
 from ldndctools.sources.soil.soil_base import SoilDataset
 
 
-def translate_data_format(d: xr.Dataset) -> Iterable[LayerData]:
+def translate_data_format(d: xr.Dataset) -> List[LayerData]:
     """translate data from nc soil file (point-wise xarray sel) to new naming/ units"""
 
-    data = []
+    data: List[LayerData] = []
     for lev in d.lev:
         ld = LayerData()
 
@@ -25,8 +25,9 @@ def translate_data_format(d: xr.Dataset) -> Iterable[LayerData]:
             continue
 
         for varname, value in d.data_vars.items():
+            data = value.sel(lev=lev).values.item()  # type: ignore
             try:
-                setattr(ld, varname, value.sel(lev=lev).values.item())
+                setattr(ld, varname, data)
             except ValidationError:
                 setattr(ld, varname, None)
         data.append(ld)
@@ -39,11 +40,12 @@ class SiteXmlWriter:
     def __init__(self, soil: SoilDataset, res: RES):
         self.soil = soil.data
         self.mask = soil.mask
+        self.ids: Optional[xr.DataArray] = None
         self.res = res
-        self.ids = None
 
     @property
     def number_of_sites(self) -> int:
+        assert self.mask is not None
         return self.mask.sum().item()
 
     @property
@@ -57,7 +59,7 @@ class SiteXmlWriter:
     @mutually_exclusive("sample", "ids", "id_array", "coords")
     def write(
         self,
-        sample: int = None,
+        sample: Optional[int] = None,
         progressbar: Optional[Any] = None,
         status_widget: Optional[Any] = None,
         ids: Optional[Iterable[int]] = None,
@@ -69,16 +71,19 @@ class SiteXmlWriter:
         if status_widget:
             status_widget.warning("Preparing data")
 
-        ids = xr.zeros_like(self.mask, dtype=np.int32)
+        ids: xr.DataArray = xr.zeros_like(self.mask, dtype=np.int32)
 
-        Lcids, Lix, Ljx, Dcids = [], [], [], {}
+        Lcids: List[int] = []
+        Lix: List[int] = []
+        Ljx: List[int] = []
+        Dcids: Dict[Tuple[float, float], int] = {}
 
         for j in range(len(self.soil.coords["lat"])):
             for i in range(len(self.soil.coords["lon"])):
                 if id_array:
-                    cid = id_array.isel(lat=j, lon=i)
+                    cid: int = id_array.isel(lat=j, lon=i)
                 else:
-                    cid = coords2geohash_dec(
+                    cid: int = coords2geohash_dec(
                         lat=self.soil.coords["lat"][j].values.item(),
                         lon=self.soil.coords["lon"][i].values.item(),
                     )
@@ -96,7 +101,7 @@ class SiteXmlWriter:
 
         self.ids = ids * self.mask
 
-        def create_chunks(items):
+        def create_chunks(items: List[int]) -> List[List[int]]:
             block = 200
             return [items[item : item + block] for item in range(0, len(items), block)]
 

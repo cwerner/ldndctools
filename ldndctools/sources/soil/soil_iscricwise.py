@@ -54,7 +54,7 @@ class ISRICWISE_SoilDataset(SoilDataset):
             raise ValueError("Required variables not in dataset")
         return soildata
 
-    def _build_mask(self, soildata: xr.Dataset):
+    def _build_mask(self, soildata: xr.Dataset) -> xr.DataArray:
         """build a mask based on missing soil attributes"""
         check_vars = ["PHAQ", "BULK", "CLPC", "DEPTH"]
 
@@ -69,7 +69,7 @@ class ISRICWISE_SoilDataset(SoilDataset):
             ds_mask[v] = ds_mask[v].where(ds_mask[v] > 0)
         return ds_mask.to_array(dim="v", name="mask").min(dim="v", skipna=False)
 
-    def _converter(self):
+    def _converter(self) -> Converter:
         return Converter(
             self._source_attrs, SoilDataset._target_attrs, mapper=self._mapper
         )
