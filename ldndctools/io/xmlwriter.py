@@ -6,9 +6,11 @@ import numpy as np
 import xarray as xr
 from pydantic import ValidationError
 
+from ldndctools.misc.geohash import coords2geohash_dec
 from ldndctools.misc.helper import mutually_exclusive
 from ldndctools.misc.types import LayerData, RES
 from ldndctools.misc.xmlclasses import SiteXML
+from ldndctools.sources.soil.soil_base import SoilDataset
 
 
 def translate_data_format(d: xr.Dataset) -> Iterable[LayerData]:
@@ -34,7 +36,7 @@ def translate_data_format(d: xr.Dataset) -> Iterable[LayerData]:
 class SiteXmlWriter:
     """Site Xml File Writer"""
 
-    def __init__(self, soil: xr.Dataset, res: RES):
+    def __init__(self, soil: SoilDataset, res: RES):
         self.soil = soil.data
         self.mask = soil.mask
         self.res = res
@@ -47,9 +49,9 @@ class SiteXmlWriter:
     @property
     def arrays(self) -> xr.Dataset:
         ds = xr.Dataset()
-        ds["mask"] = self.mask
+        ds["soilmask"] = self.mask
         if self.ids is not None:
-            ds["ids"] = self.ids
+            ds["siteid"] = self.ids
         return ds
 
     @mutually_exclusive("sample", "ids", "id_array", "coords")
@@ -67,27 +69,30 @@ class SiteXmlWriter:
         if status_widget:
             status_widget.warning("Preparing data")
 
-        # use id mode 1000/ 10000 depending on resolution
-        id_mode = 10000 if self.res in [RES.HR, RES.MR] else 1000
-        ids = xr.zeros_like(self.mask)
+        ids = xr.zeros_like(self.mask, dtype=np.int32)
 
         Lcids, Lix, Ljx, Dcids = [], [], [], {}
 
-        for j in range(len(self.soil.lat)):
-            for i in range(len(self.soil.lon)):
+        for j in range(len(self.soil.coords["lat"])):
+            for i in range(len(self.soil.coords["lon"])):
                 if id_array:
                     cid = id_array.isel(lat=j, lon=i)
                 else:
-                    cid = (
-                        ((len(self.soil.lat) - 1) - j) * id_mode + i
-                        if self.soil.lat[0] < self.soil.lat[-1]
-                        else j * id_mode + i
+                    cid = coords2geohash_dec(
+                        lat=self.soil.coords["lat"][j].values.item(),
+                        lon=self.soil.coords["lon"][i].values.item(),
                     )
+                # print(cid)
                 ids[j, i] = cid
                 Lcids.append(cid)
                 Lix.append(i)
                 Ljx.append(j)
-                Dcids[(self.soil.lat.values[j], self.soil.lon.values[i])] = cid
+                Dcids[
+                    (
+                        self.soil.coords["lat"].values[j],
+                        self.soil.coords["lon"].values[i],
+                    )
+                ] = cid
 
         self.ids = ids * self.mask
 
