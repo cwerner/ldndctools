@@ -69,7 +69,7 @@ def ask_for_resolution(cfg):
 
 
 class Selector(object):
-    def __init__(self, df):
+    def __init__(self, df: pd.DataFrame):
         self._df = df[~df.ADM0_A3.isin(["ATF", "ATA"])]
         self._df = self._df.set_crs("EPSG:4326")
 

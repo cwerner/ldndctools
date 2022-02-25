@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import Any, Union
 
 import geopandas as gpd
 import numpy as np
@@ -41,7 +42,7 @@ class SoilDataset(ABC):
         pass
 
     @abstractmethod
-    def _converter(self):
+    def _converter(self) -> Any:
         pass
 
     # TODO: flesh this out in full (with tests)
@@ -71,7 +72,7 @@ class SoilDataset(ABC):
             raise NotImplementedError("This is invalid!")
 
     @property
-    def mask(self):
+    def mask(self) -> Union[xr.DataArray, None]:
         """return binary mask"""
         return (
             xr.ones_like(self._mask).where(self._mask >= 1)
@@ -80,7 +81,7 @@ class SoilDataset(ABC):
         )
 
     @property
-    def mask_3d(self):
+    def mask_3d(self) -> xr.DataArray:
         """return 3d mask to clip soildata"""
         lev_max_idx = self.layer_mask.max(skipna=True).astype(int).item()
         mask = (self.layer_mask.values >= np.arange(lev_max_idx)[:, None, None]).astype(
@@ -102,17 +103,17 @@ class SoilDataset(ABC):
         return mask_3d
 
     @property
-    def layer_mask(self):
+    def layer_mask(self) -> xr.DataArray:
         """return mask with indicators for number of layers"""
         return self._mask
 
     @property
-    def original(self):
+    def original(self) -> Union[xr.Dataset, None]:
         """return source xarray dataset"""
         return self._soil if self._soil is not None else None
 
     @property
-    def data(self):
+    def data(self) -> Union[xr.Dataset, None]:
         """return masked xarray soil dataset with ldndc standard variables"""
         if self.original is not None:
             ds = xr.Dataset()

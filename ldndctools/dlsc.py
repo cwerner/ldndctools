@@ -52,8 +52,8 @@ def main():
     if args.storeconfig:
         set_config(cfg)
 
-    def _get_cfg_item(group, item, save="na"):
-        return cfg[group].get(item, save)
+    # def _get_cfg_item(group, item, save="na"):
+    #     return cfg[group].get(item, save)
 
     # TODO: move this to file
     # BASEINFO = dict(
@@ -144,9 +144,7 @@ def main():
     log.info(selector.selected)
 
     with tqdm(total=1) as progressbar:
-        result = create_dataset(soil, selector, res, progressbar)
-
-    xml, nc = result
+        xml, nc = create_dataset(soil, selector, res, progressbar)
 
     open(cfg["outname"], "w").write(xml)
     ENCODING = {
