@@ -149,7 +149,11 @@ def main():
     xml, nc = result
 
     open(cfg["outname"], "w").write(xml)
-    nc.to_netcdf(cfg["outname"].replace(".xml", ".nc"))
+    ENCODING = {
+        "siteid": {"dtype": "int32", "_FillValue": -1, "zlib": True},
+        "soilmask": {"dtype": "int32", "_FillValue": -1, "zlib": True},
+    }
+    nc.to_netcdf(cfg["outname"].replace(".xml", ".nc"), encoding=ENCODING)
 
 
 if __name__ == "__main__":
