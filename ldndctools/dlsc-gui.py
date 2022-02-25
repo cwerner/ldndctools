@@ -12,6 +12,7 @@ from ldndctools.io.zipwriter import ZipWriter
 from ldndctools.misc.create_data import create_dataset
 from ldndctools.misc.helper import dataset_to_bytes, get_s3_link
 from ldndctools.misc.types import RES
+from ldndctools.sources.soil.soil_iscricwise import ISRICWISE_SoilDataset
 
 
 def widget_resolution():
@@ -82,7 +83,8 @@ def main():
         progressbar = st.sidebar.progress(0)
 
         soil = catalog.soil(res=res.name).read()
-        result = create_dataset(soil, selector, res, progressbar, status_widget)
+        soildata = ISRICWISE_SoilDataset(soil)
+        result = create_dataset(soildata, selector, res, progressbar, status_widget)
 
         if result:
             note.success("Processing done!")
