@@ -157,7 +157,7 @@ def cli():
         "-r",
         "--res",
         dest="resolution",
-        default="HR",
+        default="LR",
         metavar="LR, MR, HR",
         type=str.upper,
         help="data res (0.083, 0.25, 0.5)",
