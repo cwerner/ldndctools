@@ -23,6 +23,10 @@ order_by_type = false
 multi_line_output = 3
 include_trailing_comma = true
 
+[tool.coverage.run]
+omit = [   
+    "_version.py",
+]
 
 [tool.pytest.ini_options]
 minversion = "7.0"
