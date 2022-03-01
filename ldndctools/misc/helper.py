@@ -4,6 +4,7 @@ import os
 import xml.dom.minidom as md
 import xml.etree.cElementTree as et
 from functools import wraps
+from typing import Any
 
 import boto3
 import netCDF4
@@ -20,13 +21,13 @@ logging.getLogger("botocore").setLevel(logging.WARNING)
 
 
 # from: https://stackoverflow.com/a/54487188/5300574
-def mutually_exclusive(keyword, *keywords):
+def mutually_exclusive(keyword: str, *keywords: str):
     """decorator for mutually exclusive kwargs"""
     keywords = (keyword,) + keywords
 
-    def wrapper(func):
+    def wrapper(func: Any) -> Any:
         @wraps(func)
-        def inner(*args, **kwargs):
+        def inner(*args: Any, **kwargs: Any) -> Any:
             if sum(k in keywords for k in kwargs) > 1:
                 raise TypeError(
                     "You must specify exactly one of {}".format(", ".join(keywords))
