@@ -26,7 +26,7 @@ def target_attribs():
     ]
 
 
-@pytest.fixture()
+@pytest.fixture(scope="session")
 def isricwise_ds():
     # currently only using LR
     test_files = [
@@ -38,7 +38,7 @@ def isricwise_ds():
     return ISRICWISE_SoilDataset(ds)
 
 
-@pytest.fixture()
+@pytest.fixture(scope="session")
 def country_gdf():
     test_files = [
         os.path.join(os.path.dirname(__file__), p)
