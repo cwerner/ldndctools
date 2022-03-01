@@ -40,14 +40,14 @@ class BoundingBox:
     y1: confloat(ge=-90, le=90) = -90
     y2: confloat(ge=-90, le=90) = 90
 
-    @root_validator
+    @root_validator(allow_reuse=True)
     def check_x1_smaller_x2(cls, values):
         x1, x2 = values.get("x1"), values.get("x2")
         if x1 >= x2:
             raise ValidationError("x1 must be smaller x2")
         return values
 
-    @root_validator
+    @root_validator(allow_reuse=True)
     def check_y1_smaller_y2(cls, values):
         y1, y2 = values.get("y1"), values.get("y2")
         if y1 >= y2:
@@ -105,7 +105,7 @@ class LayerData(BaseModel):
     #             raise ValidationError("wcmin must be smaller wcmax")
     #     return values
 
-    @root_validator
+    @root_validator(allow_reuse=True)
     def check_texture_is_plausible(cls, values):
         sand, silt, clay = values.get("sand"), values.get("silt"), values.get("clay")
         args = [a for a in [sand, silt, clay] if a is not None]
