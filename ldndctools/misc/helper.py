@@ -4,7 +4,7 @@ import os
 import xml.dom.minidom as md
 import xml.etree.cElementTree as et
 from functools import wraps
-from typing import Any
+from typing import Any, Iterable
 
 import boto3
 import netCDF4
@@ -86,12 +86,12 @@ def get_s3_link(
     return download_url
 
 
-def prettify(elem):
+def prettify(elem: et.Element) -> str:
     """Return a pretty-printed XML string for the Element."""
     rough_string = et.tostring(elem, "utf-8")
-    reparsed = md.parseString(rough_string)
-    str1 = reparsed.toprettyxml(indent="  ")
-    str2 = []
+    reparsed: md.Document = md.parseString(rough_string)
+    str1: str = reparsed.toprettyxml(indent="  ")
+    str2: Iterable[str] = []
     ss = str1.split("\n")
     for s in ss:
         x = "".join(s.split())
