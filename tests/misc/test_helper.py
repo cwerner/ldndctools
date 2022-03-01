@@ -1,8 +1,9 @@
+import xml.etree.cElementTree as et
 from typing import Optional
 
 import pytest
 
-from ldndctools.misc.helper import mutually_exclusive
+from ldndctools.misc.helper import dataset_to_bytes, mutually_exclusive, prettify
 
 
 def test_mutually_exclusive_illegal_raises_typeerror():
@@ -42,3 +43,31 @@ def test_mutually_exclusive_ignores_positional_arg():
 
     # NOTE: positional arguments are ignored!
     assert dummy_function(12, arg1="asf123") is True
+
+
+@pytest.fixture
+def soildata(isricwise_ds):
+    return isricwise_ds.data
+
+
+def test_dataset_to_bytes(soildata):
+
+    assert type(dataset_to_bytes(soildata)) == bytes
+
+
+def test_prettify():
+    e = et.Element("dummy_element")
+    et.SubElement(e, "sub_element1", attrib={"a": "1", "b": "2"})
+    se = et.SubElement(e, "sub_element2", attrib={"a": "3"})
+    et.SubElement(se, "sub_sub_element1", attrib={"c": "abc"})
+
+    res = """<?xml version="1.0" ?>
+<dummy_element>
+  <sub_element1 a="1" b="2"/>
+  <sub_element2 a="3">
+    <sub_sub_element1 c="abc"/>
+  </sub_element2>
+</dummy_element>
+"""
+
+    assert prettify(e) == res
