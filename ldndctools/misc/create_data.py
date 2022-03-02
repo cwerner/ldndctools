@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Any, Optional, Union
 
 import numpy as np
 import rioxarray  # noqa
@@ -14,8 +14,8 @@ def create_dataset(
     soil: SoilDataset,
     selector: Union[Selector, CoordinateSelection],
     res: RES,
-    progressbar,
-    status_widget=None,
+    progressbar: Optional[Any] = None,
+    status_widget: Optional[Any] = None,
 ):
     # soil = soil.load()
     # soil = soil.rio.write_crs(4326)
