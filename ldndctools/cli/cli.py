@@ -11,6 +11,7 @@ import datetime as dt
 import logging
 import sys
 from pathlib import Path
+from typing import Optional, Sequence
 
 from ldndctools import __version__
 
@@ -91,7 +92,7 @@ class CustomFormatter(
         return help
 
 
-def cli():
+def cli(raw_args: Optional[Sequence[str]] = None):
     """ command line interface """
 
     DESCR = f"dlsc :: LandscapeDNDC Site Creator ({__version__})"
@@ -188,7 +189,7 @@ def cli():
 
     print(GREETING)
 
-    args = parser.parse_args()
+    args = parser.parse_args(raw_args)
 
     log.debug("-" * 50)
     log.debug("ldndctools::dlsc called at: %s" % dt.datetime.now())
