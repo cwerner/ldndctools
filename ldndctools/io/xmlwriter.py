@@ -25,9 +25,9 @@ def translate_data_format(d: xr.Dataset) -> List[LayerData]:
             continue
 
         for varname, value in d.data_vars.items():
-            data = value.sel(lev=lev).values.item()  # type: ignore
+            da = value.sel(lev=lev).values.item()  # type: ignore
             try:
-                setattr(ld, varname, data)
+                setattr(ld, varname, da)
             except ValidationError:
                 setattr(ld, varname, None)
         data.append(ld)
