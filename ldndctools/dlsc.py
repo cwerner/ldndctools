@@ -52,8 +52,8 @@ def main():
     if args.storeconfig:
         set_config(cfg)
 
-    def _get_cfg_item(group, item, save="na"):
-        return cfg[group].get(item, save)
+    # def _get_cfg_item(group, item, save="na"):
+    #     return cfg[group].get(item, save)
 
     # TODO: move this to file
     # BASEINFO = dict(
@@ -134,19 +134,17 @@ def main():
             extent = selector.gdf_mask.bounds.iloc[0]
 
             new_bbox = BoundingBox(
-                x1=np.floor(extent.minx).astype("int").item(),
-                x2=np.ceil(extent.maxx).astype("int").item(),
-                y1=np.floor(extent.miny).astype("int").item(),
-                y2=np.ceil(extent.maxy).astype("int").item(),
+                x1=np.floor(extent.minx).astype("float").item(),
+                x2=np.ceil(extent.maxx).astype("float").item(),
+                y1=np.floor(extent.miny).astype("float").item(),
+                y2=np.ceil(extent.maxy).astype("float").item(),
             )
             selector.set_bbox(new_bbox)
 
     log.info(selector.selected)
 
     with tqdm(total=1) as progressbar:
-        result = create_dataset(soil, selector, res, progressbar)
-
-    xml, nc = result
+        xml, nc = create_dataset(soil, selector, res, progressbar)
 
     open(cfg["outname"], "w").write(xml)
     ENCODING = {

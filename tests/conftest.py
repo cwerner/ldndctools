@@ -1,5 +1,6 @@
 import os
 
+import geopandas as gpd
 import pytest
 import xarray as xr
 
@@ -25,7 +26,7 @@ def target_attribs():
     ]
 
 
-@pytest.fixture()
+@pytest.fixture(scope="session")
 def isricwise_ds():
     # currently only using LR
     test_files = [
@@ -35,3 +36,12 @@ def isricwise_ds():
 
     ds = xr.open_dataset(test_files[0])
     return ISRICWISE_SoilDataset(ds)
+
+
+@pytest.fixture(scope="session")
+def country_gdf():
+    test_files = [
+        os.path.join(os.path.dirname(__file__), p)
+        for p in ["data/central_europe_countries.zip"]
+    ]
+    return gpd.read_file(test_files[0])

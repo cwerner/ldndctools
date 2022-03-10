@@ -1,5 +1,5 @@
 import logging
-from typing import Iterable
+from typing import Dict, Iterable, Optional
 
 import geopandas as gpd
 import pandas as pd
@@ -12,8 +12,32 @@ from ldndctools.misc.types import BoundingBox, RES
 logging.getLogger("fiona").setLevel(logging.WARNING)
 
 
-def clean_results(x):
+def clean_results(x: Iterable[str]) -> Iterable[str]:
     return [r for r in x if r != "BACK"]
+
+
+def prepare_df_countries(df: pd.DataFrame) -> pd.DataFrame:
+    return df[~df.ADM0_A3.isin(["ATF", "ATA"])].set_crs("EPSG:4326")
+
+
+def get_country_names(df: pd.DataFrame) -> Iterable[str]:
+    return sorted(df.ADM0_A3.unique())
+
+
+def list_countries_in_domain(
+    df: pd.DataFrame, *, domain: str, data: Optional[Dict[str, Iterable[str]]] = None
+) -> Dict[str, Iterable[str]]:
+
+    if domain not in ["CONTINENT", "REGION_UN", "SUBREGION"]:
+        raise NotImplementedError
+
+    data = data or {}
+    for group, gdf in df.groupby(domain):
+        data[group] = {
+            c: gdf.query(f"ADM0_A3=='{c}'").ADMIN.values.item()
+            for c in get_country_names(gdf)
+        }
+    return data
 
 
 # TODO: this should be moved elsewhere
@@ -69,20 +93,15 @@ def ask_for_resolution(cfg):
 
 
 class Selector(object):
-    def __init__(self, df):
-        self._df = df[~df.ADM0_A3.isin(["ATF", "ATA"])]
-        self._df = self._df.set_crs("EPSG:4326")
-
-        # add all to initial selection
-        countries = sorted(self._df.ADM0_A3.unique())
+    def __init__(self, df: pd.DataFrame):
+        self._bbox = BoundingBox()
+        self._df = prepare_df_countries(df)
+        self._names = get_country_names(self._df)
         self._selection = {
-            c: self._df.query(f"ADM0_A3=='{c}'").ADMIN.values[0] for c in countries
+            c: self._df.query(f"ADM0_A3=='{c}'").ADMIN.values[0] for c in self._names
         }
 
-        self._bbox = BoundingBox()
-        self._names = sorted(self._df.ADM0_A3.unique())
-
-    def extract_countries(self, selection):
+    def extract_countries(self, selection: Iterable[str]) -> Dict[str, str]:
         # merge countries of (potentially) multiple regions
         countries = {}
         for sel in selection:
@@ -98,28 +117,12 @@ class Selector(object):
 
     @property
     def continents(self):
-        data = {}
-        for continent, _df in self._df.groupby("CONTINENT"):
-            countries = sorted(_df.ADM0_A3.unique())
-            data[continent] = {
-                c: _df.query(f"ADM0_A3=='{c}'").ADMIN.values[0] for c in countries
-            }
-        return data
+        return list_countries_in_domain(self._df, domain="CONTINENT")
 
     @property
     def regions(self):
-        data = {}
-        for region, _df in self._df.groupby("REGION_UN"):
-            countries = sorted(_df.ADM0_A3.unique())
-            data[region] = {
-                c: _df.query(f"ADM0_A3=='{c}'").ADMIN.values[0] for c in countries
-            }
-
-        for region, _df in self._df.groupby("SUBREGION"):
-            countries = sorted(_df.ADM0_A3.unique())
-            data[region] = {
-                c: _df.query(f"ADM0_A3=='{c}'").ADMIN.values[0] for c in countries
-            }
+        data = list_countries_in_domain(self._df, domain="REGION_UN")
+        data = list_countries_in_domain(self._df, domain="SUBREGION", data=data)
 
         # extra
         # NOTE: MLT is missing in LR dataset

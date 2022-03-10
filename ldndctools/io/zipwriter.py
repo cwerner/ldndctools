@@ -7,7 +7,7 @@ from zipfile import ZipFile, ZipInfo
 
 class ZipWriter:
     def __init__(self, files: Iterable[Tuple[str, Any]]):
-        self.date_time = datetime.datetime.now().timetuple()
+        self.date_time = datetime.datetime.now()
         self.files = {k: v for k, v in files}
 
     def write(self) -> bytes:
@@ -15,7 +15,8 @@ class ZipWriter:
         with ZipFile(archive, "w") as zip_archive:
             for file_name, content in self.files.items():
                 zip_archive.writestr(
-                    ZipInfo(file_name, date_time=self.date_time), content.read()
+                    ZipInfo(file_name, date_time=self.date_time.timetuple()),
+                    content.read(),
                 )
         return archive.getbuffer().tobytes()
 

@@ -4,6 +4,7 @@ import os
 import xml.dom.minidom as md
 import xml.etree.cElementTree as et
 from functools import wraps
+from typing import Any, Iterable
 
 import boto3
 import netCDF4
@@ -20,13 +21,13 @@ logging.getLogger("botocore").setLevel(logging.WARNING)
 
 
 # from: https://stackoverflow.com/a/54487188/5300574
-def mutually_exclusive(keyword, *keywords):
+def mutually_exclusive(keyword: str, *keywords: str):
     """decorator for mutually exclusive kwargs"""
     keywords = (keyword,) + keywords
 
-    def wrapper(func):
+    def wrapper(func: Any) -> Any:
         @wraps(func)
-        def inner(*args, **kwargs):
+        def inner(*args: Any, **kwargs: Any) -> Any:
             if sum(k in keywords for k in kwargs) > 1:
                 raise TypeError(
                     "You must specify exactly one of {}".format(", ".join(keywords))
@@ -85,12 +86,12 @@ def get_s3_link(
     return download_url
 
 
-def prettify(elem):
+def prettify(elem: et.Element) -> str:
     """Return a pretty-printed XML string for the Element."""
     rough_string = et.tostring(elem, "utf-8")
-    reparsed = md.parseString(rough_string)
-    str1 = reparsed.toprettyxml(indent="  ")
-    str2 = []
+    reparsed: md.Document = md.parseString(rough_string)
+    str1: str = reparsed.toprettyxml(indent="  ")
+    str2: Iterable[str] = []
     ss = str1.split("\n")
     for s in ss:
         x = "".join(s.split())
