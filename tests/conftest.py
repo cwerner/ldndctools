@@ -42,6 +42,6 @@ def isricwise_ds():
 def country_gdf():
     test_files = [
         os.path.join(os.path.dirname(__file__), p)
-        for p in ["data/ne_10m_admin_0_countries.zip"]
+        for p in ["data/central_europe_countries.zip"]
     ]
     return gpd.read_file(test_files[0])
