@@ -68,6 +68,20 @@ sources:
           cache_storage: '.cache'
           same_names: true
 
+  climate_era5land_hr:
+    description: ERA5 Land regridded to LandscapeDNDC HR (0.083deg)
+    driver: zarr
+    args:
+      urlpath: 's3://era5land-zarr/data.zarr'
+      consolidated: True
+      storage_options:
+        use_ssl: False
+        anon: True
+        client_kwargs:
+          endpoint_url: 'https://s3.imk-ifu.kit.edu:8082'
+          verify: False
+
+
   climate_pgf3:
     name: 'CLIMATE'
     description: 'Princeton Global Fields 0.25x0.25 deg res daily data for ldndctools (climate file generation). Careful, VERY BIG!'
