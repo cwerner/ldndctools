@@ -1,10 +1,12 @@
+import argparse
 import gzip
 import io
+import platform
+import warnings
 from dataclasses import dataclass
 from importlib import resources
-from typing import Any, Dict, Iterable, Union, Optional
-
-import platform
+from pathlib import Path
+from typing import Any, Dict, Iterable, Optional, Union
 
 import dask
 import intake
@@ -13,17 +15,14 @@ import pandas as pd
 import urllib3
 import xarray as xr
 from dask.distributed import Client
+from pydantic import ValidationError
 
-import argparse
-from pathlib  import Path
-
-from ldndctools.misc.geohash import coords2geohash_dec 
+from ldndctools.misc.geohash import coords2geohash_dec
 from ldndctools.misc.types import BoundingBox
 
-
-import warnings
-warnings.filterwarnings('ignore')
+warnings.filterwarnings("ignore")
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
 
 @dataclass
 class ClimateSiteStats:
@@ -42,7 +41,10 @@ class ClimateSiteStats:
 
 
 def subset_climate_data(
-    *, bbox: Optional[BoundingBox] = None, date_min: Optional[str] = None, date_max: Optional[str] = None
+    *,
+    bbox: Optional[BoundingBox] = None,
+    date_min: Optional[str] = None,
+    date_max: Optional[str] = None,
 ) -> xr.Dataset:
 
     with resources.path("data", "catalog.yml") as cat:
@@ -77,7 +79,7 @@ time     = "{time}/1"
 
 def fill_header(d: ClimateSiteStats) -> str:
 
-    txt = f'''
+    txt = f"""
 %climate
 name = "climate_{d.id}.txt.gz"
 archive = "ERA5 Land (resampled to LDNDC HR)"
@@ -98,14 +100,16 @@ temperature amplitude = {d.temperature_amplitude:.2f}
 
 %data
 *       *       tavg    tmin    tmax    grad    prec    rh      wind
-'''
+"""
     return txt
 
 
-def writer(df: pd.DataFrame, pid: int, *, lookup: Dict[int, ClimateSiteStats], args: Any = None) -> Iterable[int]:
+def writer(
+    df: pd.DataFrame, pid: int, *, lookup: Dict[int, ClimateSiteStats], args: Any = None
+) -> Iterable[int]:
 
     buffer = io.StringIO()
-    
+
     header_global = fill_header_global(df.time.min().date())
     buffer.write(header_global)
 
@@ -152,19 +156,12 @@ def inner_func(x, lat, lon):
 def geohash_xr(mask: xr.DataArray) -> xr.DataArray:
     lon_xr = mask.lon.broadcast_like(mask)
     lat_xr = mask.lat.broadcast_like(mask)
-    data = xr.apply_ufunc(
-        inner_func,
-        mask, 
-        lat_xr,
-        lon_xr,
-        output_dtypes=[np.int64]
-        )
+    data = xr.apply_ufunc(inner_func, mask, lat_xr, lon_xr, output_dtypes=[np.int64])
     assert data.dtype == np.int64
     return data
 
 
-
-def get_boundingbox(bbox_flag:str) -> Union[None, BoundingBox]:
+def get_boundingbox(bbox_flag: str) -> Union[None, BoundingBox]:
     if not bbox_flag:
         return None
 
@@ -179,13 +176,13 @@ def get_boundingbox(bbox_flag:str) -> Union[None, BoundingBox]:
     return bbox
 
 
-def get_mask(mask_flag:str) -> xr.DataArray:
+def get_mask(mask_flag: str) -> xr.DataArray:
     if not mask_flag:
         return None
-    
+
     filepath, var = mask_flag.split(":")
     da = xr.open_dataset(filepath)[var].load()
-    return da.where(da>0)
+    return da.where(da > 0)
 
 
 def main(args):
@@ -196,10 +193,9 @@ def main(args):
     # mask = xr.open_dataset("VN_MISC5_V2.nc")["rice_rot"]
     # mask = xr.where(mask > 0, 1, np.nan)
 
-
     ds = subset_climate_data(
-        bbox=bbox, # BoundingBox(x1=101.5, x2=109.5, y1=8.0, y2=23.5),
-        #bbox=BoundingBox(x1=104.5, x2=105.5, y1=9.0, y2=10.0),
+        bbox=bbox,  # BoundingBox(x1=101.5, x2=109.5, y1=8.0, y2=23.5),
+        # bbox=BoundingBox(x1=104.5, x2=105.5, y1=9.0, y2=10.0),
         date_min=args.date_min,
         date_max=args.date_max,
     )
@@ -262,22 +258,31 @@ def main(args):
     partitions = ddf.to_delayed(optimize_graph=True)
 
     formatted = [
-        dask.delayed(writer)(part, i, lookup=dask.delayed(lookup), args=dask.delayed(args))
+        dask.delayed(writer)(
+            part, i, lookup=dask.delayed(lookup), args=dask.delayed(args)
+        )
         for i, part in enumerate(partitions)
-    ]   
+    ]
 
     processed_geohashs = dask.compute(*formatted)
     with open(args.outfolder / "ids.txt", "w") as out:
         for chunk_geohashs in processed_geohashs:
             out.write(" ".join([f"{ghash}" for ghash in chunk_geohashs]) + "\n")
 
-if __name__ == "__main__":
-    client = Client(dashboard_address=':1234')
 
-    print(f"NOTE: If you installed bokeh you can observe progress at {platform.node()}:1234")
+if __name__ == "__main__":
+    client = Client(dashboard_address=":1234")
+
+    print(f"NOTE: You can see progress at {platform.node()}:1234 if bokeh is installed")
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("outfolder", nargs='?', type=lambda p: Path(p).absolute(), default=Path.cwd() / "output", help="outpath for climate archive files")
+    parser.add_argument(
+        "outfolder",
+        nargs="?",
+        type=lambda p: Path(p).absolute(),
+        default=Path.cwd() / "output",
+        help="outpath for climate archive files",
+    )
 
     parser.add_argument(
         "-b",
@@ -294,7 +299,7 @@ if __name__ == "__main__":
         dest="mask",
         default=None,
         help="netcdf file with mask variable [format: filename.nc:var]",
-    )    
+    )
 
     parser.add_argument(
         "--dmin",
@@ -302,7 +307,7 @@ if __name__ == "__main__":
         default=None,
         type=str,
         help="minimum date to consider [format: 2000-01-01]",
-    )    
+    )
 
     parser.add_argument(
         "--dmax",
@@ -310,7 +315,7 @@ if __name__ == "__main__":
         default=None,
         type=str,
         help="maximum date to consider [format: 2001-12-31]",
-    )    
+    )
 
     parser.add_argument(
         "-p",
@@ -319,10 +324,9 @@ if __name__ == "__main__":
         default=20,
         type=int,
         help="subdivision for output",
-    )    
+    )
 
     args = parser.parse_args()
-    # create args.outfolder if it does not exist
     args.outfolder.mkdir(parents=True, exist_ok=True)
 
     main(args)
