@@ -1,6 +1,6 @@
 import gzip
 import io
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from importlib import resources
 from typing import Any, Dict, Iterable, Union, Optional
 
@@ -17,13 +17,13 @@ from dask.distributed import Client
 import argparse
 from pathlib  import Path
 
-from ldndctools.misc.geohash import coords2geohash_dec, geohash_dec2coords 
+from ldndctools.misc.geohash import coords2geohash_dec 
 from ldndctools.misc.types import BoundingBox
 
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 import warnings
 warnings.filterwarnings('ignore')
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 @dataclass
 class ClimateSiteStats:
@@ -255,7 +255,7 @@ def main(args):
     ddf = ds.to_dask_dataframe(dim_order=["geohash", "time"])
     ddf = ddf.loc[ddf.geohash > 0, :]
     ddf = ddf.set_index("geohash")
-    ddf = ddf.repartition(npartitions=20)
+    ddf = ddf.repartition(npartitions=args.npart)
 
     # ignore precip for now???
     ddf = ddf.dropna(subset=["tavg", "tmin", "tmax", "rad", "rh", "wind"], how="all")
@@ -274,7 +274,7 @@ def main(args):
 if __name__ == "__main__":
     client = Client(dashboard_address=':1234')
 
-    print(f"If you installed bokeh you can observe progress at {platform.node()}:1234")
+    print(f"NOTE: If you installed bokeh you can observe progress at {platform.node()}:1234")
 
     parser = argparse.ArgumentParser()
     parser.add_argument("outfolder", nargs='?', type=lambda p: Path(p).absolute(), default=Path.cwd() / "output", help="outpath for climate archive files")
@@ -312,6 +312,14 @@ if __name__ == "__main__":
         help="maximum date to consider [format: 2001-12-31]",
     )    
 
+    parser.add_argument(
+        "-p",
+        "--partitions",
+        dest="npart",
+        default=20,
+        type=int,
+        help="subdivision for output",
+    )    
 
     args = parser.parse_args()
     # create args.outfolder if it does not exist
