@@ -8,8 +8,8 @@ from ldndctools.sources.soil.types import BaseAttribute, FullAttribute
 def convert_unit(unit_a: str, unit_b: str) -> float:
     conversions = {
         ("fraction", "percent"): 100,
-        ("g kg-1", "percent"): 1000,
-        ("mm", "cm"): 10,
+        ("fraction", "g kg-1"): 1000,
+        ("cm", "mm"): 10,
     }
 
     if unit_a == unit_b:
