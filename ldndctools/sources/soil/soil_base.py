@@ -17,8 +17,10 @@ class SoilDataset(ABC):
     _target_attrs = [
         FullAttribute(name="bd", long_name="bulk density", unit="g cm-3", msd=2),
         FullAttribute(name="depth", long_name="layer depth", unit="mm", msd=0),
-        FullAttribute(name="corg", long_name="organic carbon", unit="g kg-1", msd=5),
-        FullAttribute(name="norg", long_name="organic nitrogen", unit="g kg-1", msd=6),
+        FullAttribute(name="corg", long_name="organic carbon", unit="fraction", msd=5),
+        FullAttribute(
+            name="norg", long_name="organic nitrogen", unit="fraction", msd=6
+        ),
         FullAttribute(name="ph", long_name="pH", unit="-", msd=2),
         FullAttribute(name="clay", long_name="clay fraction", unit="fraction", msd=2),
         FullAttribute(name="sand", long_name="sand fraction", unit="fraction", msd=2),
