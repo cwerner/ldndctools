@@ -182,7 +182,7 @@ def get_mask(mask_flag: str) -> xr.DataArray:
 
     filepath, var = mask_flag.split(":")
     da = xr.open_dataset(filepath)[var].load()
-    return da.where(da > 0)
+    return xr.ones_like(da).where(da > 0)
 
 
 def main(args):
@@ -192,7 +192,6 @@ def main(args):
 
     # mask = xr.open_dataset("VN_MISC5_V2.nc")["rice_rot"]
     # mask = xr.where(mask > 0, 1, np.nan)
-
     ds = subset_climate_data(
         bbox=bbox,  # BoundingBox(x1=101.5, x2=109.5, y1=8.0, y2=23.5),
         # bbox=BoundingBox(x1=104.5, x2=105.5, y1=9.0, y2=10.0),
@@ -212,7 +211,19 @@ def main(args):
     stats["wind"] = wind_year
 
     if mask is not None:
-        stats["mask"] = mask.reindex_like(stats.tavg, method="nearest", tolerance=1e-4)
+        # check that coords are close, then use those of reference file
+        coords_close = (
+            np.allclose(mask.lat.values, stats.lat.values, atol=1e-05) *
+            np.allclose(mask.lon.values, stats.lon.values, atol=1e-05)
+            )
+        if coords_close:
+            stats = stats.assign_coords({"lat": mask.lat, "lon": mask.lon})
+        else:
+            raise ValueError("Coords from climate and ref datasets are not close enough.")
+        
+        stats["mask"] = xr.ones_like(stats.tavg.load())
+        stats["mask"][:] = mask.values
+        #stats["mask"] = mask.reindex_like(stats.tavg, method="nearest", tolerance=1e-3)
     else:
         stats["mask"] = xr.ones_like(stats.tavg).where(stats.tavg > -100)
 
@@ -222,6 +233,9 @@ def main(args):
     stats["geohash"].attrs["missing_value"] = -1
 
     del stats["mask"]
+
+    # match coords (usually means take lat/ lon from ref dataset)
+    ds = ds.assign_coords({"lat": stats.lat, "lon": stats.lon})
 
     df_stats = (
         stats.to_dataframe()
