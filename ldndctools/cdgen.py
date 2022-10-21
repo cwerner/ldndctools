@@ -185,7 +185,70 @@ def get_mask(mask_flag: str) -> xr.DataArray:
     return xr.ones_like(da).where(da > 0)
 
 
-def main(args):
+def conf():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "outfolder",
+        nargs="?",
+        type=lambda p: Path(p).absolute(),
+        default=Path.cwd() / "output",
+        help="outpath for climate archive files",
+    )
+
+    parser.add_argument(
+        "-b",
+        "--bbox",
+        dest="bbox",
+        default=None,
+        metavar="[X1,Y1,X2,Y2]",
+        help="bounding box",
+    )
+
+    parser.add_argument(
+        "-m",
+        "--mask",
+        dest="mask",
+        default=None,
+        help="netcdf file with mask variable [format: filename.nc:var]",
+    )
+
+    parser.add_argument(
+        "--dmin",
+        dest="date_min",
+        default=None,
+        type=str,
+        help="minimum date to consider [format: 2000-01-01]",
+    )
+
+    parser.add_argument(
+        "--dmax",
+        dest="date_max",
+        default=None,
+        type=str,
+        help="maximum date to consider [format: 2001-12-31]",
+    )
+
+    parser.add_argument(
+        "-p",
+        "--partitions",
+        dest="npart",
+        default=20,
+        type=int,
+        help="subdivision for output",
+    )
+
+    args = parser.parse_args()
+    args.outfolder.mkdir(parents=True, exist_ok=True)
+
+    return args
+
+
+def main():
+    client = Client(dashboard_address=":1234")
+
+    print(f"NOTE: You can see progress at {platform.node()}:1234 if bokeh is installed")
+
+    args = conf()
 
     bbox = get_boundingbox(args.bbox)
     mask = get_mask(args.mask)
@@ -283,64 +346,5 @@ def main(args):
         for chunk_geohashs in processed_geohashs:
             out.write(" ".join([f"{ghash}" for ghash in chunk_geohashs]) + "\n")
 
-
 if __name__ == "__main__":
-    client = Client(dashboard_address=":1234")
-
-    print(f"NOTE: You can see progress at {platform.node()}:1234 if bokeh is installed")
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "outfolder",
-        nargs="?",
-        type=lambda p: Path(p).absolute(),
-        default=Path.cwd() / "output",
-        help="outpath for climate archive files",
-    )
-
-    parser.add_argument(
-        "-b",
-        "--bbox",
-        dest="bbox",
-        default=None,
-        metavar="[X1,Y1,X2,Y2]",
-        help="bounding box",
-    )
-
-    parser.add_argument(
-        "-m",
-        "--mask",
-        dest="mask",
-        default=None,
-        help="netcdf file with mask variable [format: filename.nc:var]",
-    )
-
-    parser.add_argument(
-        "--dmin",
-        dest="date_min",
-        default=None,
-        type=str,
-        help="minimum date to consider [format: 2000-01-01]",
-    )
-
-    parser.add_argument(
-        "--dmax",
-        dest="date_max",
-        default=None,
-        type=str,
-        help="maximum date to consider [format: 2001-12-31]",
-    )
-
-    parser.add_argument(
-        "-p",
-        "--partitions",
-        dest="npart",
-        default=20,
-        type=int,
-        help="subdivision for output",
-    )
-
-    args = parser.parse_args()
-    args.outfolder.mkdir(parents=True, exist_ok=True)
-
-    main(args)
+    main()
