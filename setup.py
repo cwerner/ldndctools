@@ -55,7 +55,7 @@ setup(
     packages=find_packages(exclude=["docs", "tests"]),
     install_requires=INSTALL_REQUIRES,
     package_dir={"ldndctools": "ldndctools"},
-    package_data={"ldndctools": ["data/catalog.yml"]},
+    package_data={"ldndctools": ["data/catalog.yml", "data/ldndctools.conf"]},
     include_package_data=True,
     entry_points={
         "console_scripts": [
