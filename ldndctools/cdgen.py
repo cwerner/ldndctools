@@ -43,6 +43,7 @@ class ClimateSiteStats:
 def subset_climate_data(
     *,
     bbox: Optional[BoundingBox] = None,
+    mask: Optional[xr.DataArray] = None,
     date_min: Optional[str] = None,
     date_max: Optional[str] = None,
 ) -> xr.Dataset:
@@ -50,6 +51,10 @@ def subset_climate_data(
     with resources.path("data", "catalog.yml") as cat:
         catalog = intake.open_catalog(str(cat))
         ds = catalog["climate_era5land_hr"].to_dask()
+
+        if mask is not None:
+            mask = mask.interp(lat=ds["lat"], lon=ds["lon"])
+            ds = ds.where(mask>0)
 
         if bbox:
             ds = ds.sel(lat=slice(bbox.y1, bbox.y2), lon=slice(bbox.x1, bbox.x2))
@@ -257,6 +262,7 @@ def main():
     # mask = xr.where(mask > 0, 1, np.nan)
     ds = subset_climate_data(
         bbox=bbox,  # BoundingBox(x1=101.5, x2=109.5, y1=8.0, y2=23.5),
+        mask=mask,
         # bbox=BoundingBox(x1=104.5, x2=105.5, y1=9.0, y2=10.0),
         date_min=args.date_min,
         date_max=args.date_max,
@@ -274,19 +280,20 @@ def main():
     stats["wind"] = wind_year
 
     if mask is not None:
-        # check that coords are close, then use those of reference file
-        coords_close = (
-            np.allclose(mask.lat.values, stats.lat.values, atol=1e-05) *
-            np.allclose(mask.lon.values, stats.lon.values, atol=1e-05)
-            )
-        if coords_close:
-            stats = stats.assign_coords({"lat": mask.lat, "lon": mask.lon})
-        else:
-            raise ValueError("Coords from climate and ref datasets are not close enough.")
+        stats["mask"] = mask
+        ## check that coords are close, then use those of reference file
+        #coords_close = (
+        #    np.allclose(mask.lat.values, stats.lat.values, atol=1e-05) *
+        #    np.allclose(mask.lon.values, stats.lon.values, atol=1e-05)
+        #    )
+        #if coords_close:
+        #    stats = stats.assign_coords({"lat": mask.lat, "lon": mask.lon})
+        #else:
+        #    raise ValueError("Coords from climate and ref datasets are not close enough.")
         
-        stats["mask"] = xr.ones_like(stats.tavg.load())
-        stats["mask"][:] = mask.values
-        #stats["mask"] = mask.reindex_like(stats.tavg, method="nearest", tolerance=1e-3)
+        #stats["mask"] = xr.ones_like(stats.tavg.load())
+        #stats["mask"][:] = mask.values
+        ##stats["mask"] = mask.reindex_like(stats.tavg, method="nearest", tolerance=1e-3)
     else:
         stats["mask"] = xr.ones_like(stats.tavg).where(stats.tavg > -100)
 
