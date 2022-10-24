@@ -54,12 +54,12 @@ setup(
     packages=find_packages(exclude=["docs", "tests"]),
     install_requires=INSTALL_REQUIRES,
     package_dir={"ldndctools": "ldndctools"},
-    package_data={"ldndctools": ["data/catalog.yml"]},
+    package_data={"ldndctools": ["data/catalog.yml", "data/ldndctools.conf"]},
     include_package_data=True,
     entry_points={
         "console_scripts": [
             "dlsc=ldndctools.dlsc:main",
-            "nlcc=ldndctools.nlcc:main",
+            "cdgen=ldndctools.cdgen:main",
             "nlcc_split4db=ldndctools.nlcc_split4db:main",
         ]
     },
