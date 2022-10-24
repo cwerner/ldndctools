@@ -60,7 +60,7 @@ setup(
     entry_points={
         "console_scripts": [
             "dlsc=ldndctools.dlsc:main",
-            "nlcc=ldndctools.nlcc:main",
+            "cdgen=ldndctools.cdgen:main",
             "nlcc_split4db=ldndctools.nlcc_split4db:main",
         ]
     },
