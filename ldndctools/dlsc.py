@@ -41,12 +41,17 @@ with resources.path("data", "") as dpath:
     DPATH = Path(dpath)
 
 
-def main():
+def main( **kwargs):
     # parse args
     args = cli()
 
     # read config
-    cfg = get_config(args.config)
+    if 'config' in kwargs:
+        cfg = kwargs['config']
+        for k,v in cfg.items():
+            setattr(args, k, v)
+    else:
+        cfg = get_config(args.config)
 
     # write config
     if args.storeconfig:
@@ -81,7 +86,10 @@ def main():
 
     bbox = None
     if args.bbox:
-        x1, y1, x2, y2 = [float(x) for x in args.bbox.split(",")]
+        if type( args.bbox) == list:
+            x1, y1, x2, y2 = args.bbox
+        else: 
+            x1, y1, x2, y2 = [float(x) for x in args.bbox.split(",")]
         try:
             bbox = BoundingBox(x1=x1, y1=y1, x2=x2, y2=y2)
         except ValidationError:
