@@ -91,7 +91,7 @@ def get_config(cfgFile=None):
         cfgFile = _find_config()
 
         if not cfgfile_exists(cfgFile):
-            log.info("Copying config file")
+            log.info("Copying default config file")
             _copy_default_config()
             cfgFile = _find_config()
 
