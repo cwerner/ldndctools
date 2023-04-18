@@ -156,7 +156,7 @@ def main( **kwargs):
     log.info(selector.selected)
 
     with tqdm(total=1) as progressbar:
-        xml, nc = create_dataset(soil, selector, res, progressbar)
+        xml, nc = create_dataset(soil, selector, res, args, progressbar)
 
     open(cfg["outname"], "w").write(xml)
     ENCODING = {
