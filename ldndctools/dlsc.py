@@ -30,8 +30,7 @@ from ldndctools.misc.types import BoundingBox, RES
 from ldndctools.sources.soil.soil_iscricwise import ISRICWISE_SoilDataset
 
 log = logging.getLogger(__name__)
-
-log.setLevel("DEBUG")
+log.setLevel("INFO")
 
 NODATA = "-99.99"
 
