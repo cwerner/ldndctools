@@ -161,7 +161,7 @@ def inner_func(x, lat, lon):
 def geohash_xr(mask: xr.DataArray) -> xr.DataArray:
     lon_xr = mask.lon.broadcast_like(mask)
     lat_xr = mask.lat.broadcast_like(mask)
-    data = xr.apply_ufunc(inner_func, mask, lat_xr, lon_xr, output_dtypes=[np.int64])
+    data = xr.apply_ufunc(inner_func, mask, lat_xr, lon_xr, output_dtypes=[np.int64], dask="allowed")
     assert data.dtype == np.int64
     return data
 
