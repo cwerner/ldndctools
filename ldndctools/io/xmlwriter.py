@@ -71,9 +71,9 @@ class SiteXmlWriter:
         if status_widget:
             status_widget.warning("Preparing data")
 
-        if not all(v is None for v in [sample, id_selection, coords]):
-            # options currently not implemented
-            raise NotImplementedError
+        #if not all(v is None for v in [sample, id_selection, coords]):
+        #    # options currently not implemented
+        #    raise NotImplementedError
 
         ids: xr.DataArray = xr.zeros_like(self.mask, dtype=np.int32)
 
@@ -91,7 +91,10 @@ class SiteXmlWriter:
                         lat=self.soil.coords["lat"][j].values.item(),
                         lon=self.soil.coords["lon"][i].values.item(),
                     )
-                # print(cid)
+                if id_selection:
+                    if cid not in id_selection:
+                        continue
+
                 ids[j, i] = cid
                 Lcids.append(cid)
                 Lix.append(i)

@@ -30,8 +30,7 @@ from ldndctools.misc.types import BoundingBox, RES
 from ldndctools.sources.soil.soil_iscricwise import ISRICWISE_SoilDataset
 
 log = logging.getLogger(__name__)
-
-log.setLevel("DEBUG")
+log.setLevel("INFO")
 
 NODATA = "-99.99"
 
@@ -41,12 +40,17 @@ with resources.path("data", "") as dpath:
     DPATH = Path(dpath)
 
 
-def main():
+def main( **kwargs):
     # parse args
     args = cli()
 
     # read config
-    cfg = get_config(args.config)
+    if 'config' in kwargs:
+        cfg = kwargs['config']
+        for k,v in cfg.items():
+            setattr(args, k, v)
+    else:
+        cfg = get_config(args.config)
 
     # write config
     if args.storeconfig:
@@ -80,14 +84,21 @@ def main():
     res = RES[args.resolution]
 
     bbox = None
+
+    if ('lat' in args) and ('lon' in args):
+       setattr(args, 'bbox', [float(args.lon-0.5), float(args.lat-0.5), float(args.lon+0.5), float(args.lat+0.5)]) 
+       log.info("Creating bounding box for coordinates specified.")
     if args.bbox:
-        x1, y1, x2, y2 = [float(x) for x in args.bbox.split(",")]
+        if type( args.bbox) == list:
+            x1, y1, x2, y2 = args.bbox
+        else: 
+            x1, y1, x2, y2 = [float(x) for x in args.bbox.split(",")]
         try:
             bbox = BoundingBox(x1=x1, y1=y1, x2=x2, y2=y2)
         except ValidationError:
-            print("Ilegal bounding box coordinates specified.")
-            print("required: x1,y1,x2,y2 [cond: x1<x2, y1<y2]")
-            print(f"given:    x1={x1},y1={y1},x2={x2},y2={y2}")
+            log.info("Ilegal bounding box coordinates specified.")
+            log.info("required: x1,y1,x2,y2 [cond: x1<x2, y1<y2]")
+            log.info(f"given:    x1={x1},y1={y1},x2={x2},y2={y2}")
             exit(1)
 
     if not args.outfile:
@@ -144,7 +155,7 @@ def main():
     log.info(selector.selected)
 
     with tqdm(total=1) as progressbar:
-        xml, nc = create_dataset(soil, selector, res, progressbar)
+        xml, nc = create_dataset(soil, selector, res, args, progressbar)
 
     open(cfg["outname"], "w").write(xml)
     ENCODING = {

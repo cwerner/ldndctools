@@ -220,14 +220,18 @@ class Selector(object):
 
 
 class CoordinateSelection:
-    def __init__(self, infile, lon_col="lon", lat_col="lat", id_col="ID"):
-        df = pd.read_csv(infile, delim_whitespace=True)
+    
+    def __init__(self, infile=None, lon="lon", lat="lat", cid="ID"):
+        if infile:
+            df = pd.read_csv(infile, delim_whitespace=True)
 
-        self.lons = df[lon_col].values
-        self.lats = df[lat_col].values
-        self.ids = (
-            df[id_col].values if id_col in list(df.columns) else range(len(self.lats))
-        )
+            self.lons = df[lon].values
+            self.lats = df[lat].values
+            self.ids  = df[cid].values if cid in list(df.columns) else range(len(self.lats))
+        else:
+            self.lons = [lon]
+            self.lats = [lat]
+            self.ids  = [cid]
 
     @property
     def selected(self):

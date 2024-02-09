@@ -1,29 +1,35 @@
 from typing import Any, Optional, Union
 
+import logging
 import numpy as np
 import rioxarray  # noqa
 import xarray as xr
 
+from ldndctools.misc.geohash import coords2geohash_dec
 from ldndctools.cli.selector import CoordinateSelection, Selector
 from ldndctools.io.xmlwriter import SiteXmlWriter
 from ldndctools.misc.types import RES
 from ldndctools.sources.soil.soil_base import SoilDataset
 
+log = logging.getLogger(__name__)
+
+log.setLevel("DEBUG")
 
 def create_dataset(
     soil: SoilDataset,
     selector: Union[Selector, CoordinateSelection],
     res: RES,
+    args,
     progressbar: Optional[Any] = None,
     status_widget: Optional[Any] = None,
-):
+    ):
     # soil = soil.load()
     # soil = soil.rio.write_crs(4326)
 
     if isinstance(selector, Selector):
-        print("Using Selector")
+        log.info("Using Selector")
         if selector.gdf_mask is None:
-            print("No valid data to process for this region/ bbox request.")
+            log.info("No valid data to process for this region/ bbox request.")
             exit(1)
 
         # clip region selection
@@ -36,7 +42,12 @@ def create_dataset(
         soil.clip_mask(selector.gdf_mask.geometry, all_touched=True)
 
         xmlwriter = SiteXmlWriter(soil, res=res)
-        site_xml = xmlwriter.write(progressbar=progressbar, status_widget=status_widget)
+        if ('lat' in args) and ('lon' in args):
+            sel = soil._soil.sel(lat=args.lat, lon=args.lon, method='nearest')
+            cid = coords2geohash_dec( lat=sel["lat"].values.item(), lon=sel["lon"].values.item())
+            site_xml = xmlwriter.write(progressbar=progressbar, status_widget=status_widget, id_selection=[cid])
+        else:
+            site_xml = xmlwriter.write(progressbar=progressbar, status_widget=status_widget)
 
     else:
         # WARNING: THIS BRANCH IS DEFUNCT!!!
