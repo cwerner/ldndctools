@@ -21,7 +21,8 @@ sources:
           anon: true
           default_fill_cache: false
           client_kwargs:
-            endpoint_url: 'https://s3.imk-ifu.kit.edu:8082'
+            endpoint_url: 'https://s3.imk-ifu.kit.edu:10443'
+            verify: False
         simplecache:
           cache_storage: '.cache'
           same_names: true
@@ -63,7 +64,7 @@ sources:
           anon: true
           default_fill_cache: false
           client_kwargs:
-            endpoint_url: 'https://s3.imk-ifu.kit.edu:8082'
+            endpoint_url: 'https://s3.imk-ifu.kit.edu:10443'
         simplecache:
           cache_storage: '.cache'
           same_names: true
@@ -73,12 +74,12 @@ sources:
     driver: zarr
     args:
       urlpath: 's3://era5land-zarr/data.zarr'
-      consolidated: True
+      consolidated: False
       storage_options:
-        use_ssl: False
+        use_ssl: True
         anon: True
         client_kwargs:
-          endpoint_url: 'https://s3.imk-ifu.kit.edu:8082'
+          endpoint_url: 'https://s3.imk-ifu.kit.edu:10443'
           verify: False
 
 
@@ -100,7 +101,7 @@ sources:
           anon: true
           default_fill_cache: false
           client_kwargs:
-            endpoint_url: 'https://s3.imk-ifu.kit.edu:8082'
+            endpoint_url: 'https://s3.imk-ifu.kit.edu:10443'
         simplecache:
           cache_storage: '.cache'
           same_names: true
